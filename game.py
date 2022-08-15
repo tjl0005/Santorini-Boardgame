@@ -1,5 +1,24 @@
-# TODO: Attempt to build on another worker skips turn
-# TODO: Worker label issue when climbing above level 1
+import re
+from exceptions import SelectionError, BoundsError, SpaceTakenError
+# TODO: Remove feature where you cannot build higher than current level, not a rule, oops
+# TODO: Convert player lists into dictionaries in config
+# TODO: Move counter
+# TODO: Log
+
+workerLoc = []
+buildLoc = []
+buildDetails = []
+
+# Generate board
+board = [["|    |" for a in range(5)] for b in range(5)]
+
+buildCode = {
+    0: "| L1 |",
+    1: "| L2 |",
+    2: "| L3 |",
+    3: "| L4 |"
+}
+
 
 def setStart(player):
     """Uses user inputs to decide on the location for each of the workers and stores the input as formatted coordinates
@@ -35,8 +54,6 @@ def checkStart(pos1, pos2):
         raise SpaceTakenError
     elif iPos1 in workerLoc or iPos2 in workerLoc:  # Other player taken the space
         raise SpaceTakenError
-    # elif any(0 < val > 4 for val in iPos1):  # Given positions out of bounds
-    #     raise BoundsError
     else:  # Valid position given
         validPos = iPos1, iPos2
         # Track all starting positions
@@ -67,26 +84,21 @@ def playerChoice(startPos, player):
 
             print("------ ------ ------ ------ ------")
 
-            print("Player {}".format(player[2]))
-
             worker = input("Select worker, {} or {} ? ".format(player[0], player[1]))
 
             # Player selected invalid character
             if worker not in ["A", "B", "C", "D"]:
                 print("Fault 1")
                 raise SelectionError
-            # Select index for relevant characters coordinates
-            elif worker == "A" or worker == "C":
-                i, j = 0, 1
-            else:
-                i, j = 1, 0
 
+            active, static = workerIndex(worker)
             decision = input("Move or Build? ")
 
             if decision == "Move":
-                return playerMove(player, startPos, i, j)
+                startPos[active] = playerMove(player, startPos[active], worker)
+                return startPos
             elif decision == "Build":
-                playerBuild(startPos[i], player, i)
+                playerBuild(startPos[active], player, active)
                 return startPos
             else:
                 print("Fault 2")
@@ -100,57 +112,68 @@ def playerChoice(startPos, player):
             print("Invalid selection, please try again.")
 
 
-def playerMove(player, startPos, i, j):
+def playerMove(player, startPos, worker):
     move = input("Direction? ")
 
-    newPos = newPosition(move, [startPos[i][0], startPos[i][1]])
+    active, static = workerIndex(worker)
+    newPos = newPosition(move, [startPos[0], startPos[1]])
 
-    # Player out of bounds
-    if 5 in newPos or -1 in newPos:
-        print(newPos)
+    if 5 in newPos or -1 in newPos:  # Player attempting to go out of bounds
         print("Fault 3")
         raise BoundsError
     elif newPos in workerLoc:  # Space in use by another player
         print("Fault 4")
         raise SpaceTakenError
     else:  # Standard movement
-        # Check if space can be climbed
-        if newPos in buildLoc:
-            climb = playerClimb(newPos, player, i)
-            if not climb[0]:
+        if newPos in buildLoc:  # Check if space can be climbed and how so
+            climb = playerClimb(newPos, player, active)
+
+            if not climb[0]:  # Cannot climb
                 print("Fault 5")
                 raise BoundsError
-            elif type(climb[1]) is int:
-                board[startPos[i][0]][startPos[i][1]] = buildCode[climb[1]-1]  # Clear icon from old position
-            else:
-                board[startPos[i][0]][startPos[i][1]] = "|    |"  # Clear icon from old position
+
+            elif type(climb[1]) is int:  # Moving between buildings on same level
+                board[startPos[0]][startPos[1]] = buildCode[climb[1] - 1]
+
+            else:  # Going up a level
+                if climb[1] > 0:  # If higher than L1 need to replace old building
+                    board[startPos[0]][startPos[1]] = buildCode[climb[1] - 1]
+                else:  # No building occupied so a blanks space
+                    clearPos(startPos)
+
+        elif startPos in buildLoc:  # Player descending
+            currentLevel = findBuildLevel(startPos)
+            board[startPos[0]][startPos[1]] = buildCode[currentLevel-1]
+
         else:
-            board[startPos[i][0]][startPos[i][1]] = "|    |"  # Clear icon from old position
+            clearPos(startPos)
 
-        if startPos[i] in workerLoc:
-            workerLoc.remove(startPos[i])
+        workerLoc[workerLoc.index(startPos)] = newPos
+        board[newPos[0]][newPos[1]] = player[active]  # Update player position on the board
 
-        workerLoc.append(newPos)  # Track players new position
-        board[newPos[0]][newPos[1]] = player[i]  # Update player position on the board
-
-        return [newPos[0], newPos[1]], startPos[j]
+        return [newPos[0], newPos[1]]
 
 
 def playerClimb(newPos, player, i):
     pRef, k, j = findWorkerLevel(player, i)
-
     buildingLevel = findBuildLevel(newPos)
 
-    if (buildingLevel - 1) == player[j]:
-        player[j] += 1
-        player[i] = "| {}{} |".format(pRef, player[j]).replace("0", "")
+    if (buildingLevel - 1) == player[j]:  # Player is going to climb up one level
+        player[j] += 1  # Update player level
+        pRef = re.sub("[0-9]", "", pRef)  # Remove level reference
+        player[i] = "| {}{} |".format(pRef, player[j])  # Update player reference
+
+        if player[j] == 3:
+            print("Player {}, has won!".format(player[2]))
+            exit()
 
         return True, True
-    elif buildingLevel == player[j]:
 
+    elif buildingLevel == player[j]:  # Worker going across buildings
         return True, buildingLevel
-    else:
-        return False, False
+
+    else:  # Standard movement detection
+        return False, ""
 
 
 def playerBuild(startPos, player, i):
@@ -158,14 +181,15 @@ def playerBuild(startPos, player, i):
 
     buildPos = newPosition(move, [startPos[0], startPos[1]])
 
-    if buildPos not in buildLoc and buildPos not in workerLoc:  # Space not built on or occupied by worker
+    if buildPos in workerLoc:  # Space is taken by a worker
+        raise SelectionError
+    elif buildPos not in buildLoc:  # Space not built on so know it's the first level
         newLevel = buildCode[0]
-
-    else:
+    else:  # Building higher than l1
         pRef, k, j = findWorkerLevel(player, i)
         buildLevel = findBuildLevel(buildPos)
 
-        if buildLevel == player[j]:  # Prevents workers building on inaccessible spaces
+        if buildLevel == player[j]:  # Check worker not attempting to build higher than valid level
             newLevel = buildCode[buildLevel]
         else:
             print("Fault 7")
@@ -190,12 +214,24 @@ def findWorkerLevel(player, i):
 
 
 def findBuildLevel(buildPos):
-    cLevel = ""
     for i in buildDetails:
         if i[0] == buildPos:  # Find matching record
-            cLevel = i[1].replace("|", "").replace(" ", "").replace("L", "")  # Standardise reference
+            return int(i[1].replace("|", "").replace(" ", "").replace("L", ""))  # Standardise reference
 
-    return int(cLevel)
+
+def workerIndex(worker):
+    if worker == "A" or worker == "C":
+        active, static = 0, 1
+    elif worker == "B" or worker == "D":
+        active, static = 1, 0
+    else:
+        raise SelectionError
+
+    return active, static
+
+
+def clearPos(startPos):
+    board[startPos[0]][startPos[1]] = "|    |"  # Clear icon from old position
 
 
 def newPosition(move, newPos):
@@ -220,53 +256,8 @@ def newPosition(move, newPos):
         case "SD":
             newPos[0] += 1
             newPos[1] += 1
-        case other:
+        case _:
             print("Fault 8")
             raise SelectionError()
 
     return newPos
-
-
-class SpaceTakenError(Exception):
-    """Player selecting an occupied space"""
-    pass
-
-
-class BoundsError(Exception):
-    """Player attempting to go out of board limit"""
-    pass
-
-
-class SelectionError(Exception):
-    """Player inputted invalid coordinates"""
-    pass
-
-
-class BuildLimitError(Exception):
-    """Player hit build limit"""
-    pass
-
-
-playerA, playerB = ["| A0 |", "| B0 |", "One", 0, 0], ["| C0 |", "| D0 |", "Two", 0, 0]
-workerLoc = []
-buildLoc = []
-buildDetails = []
-
-# Generate board
-board = [["|    |" for a in range(5)] for b in range(5)]
-
-# Position players characters
-posA, posB = prepPlayer(playerA)
-posC, posD = prepPlayer(playerB)
-
-buildCode = {
-    0: "| L1 |",
-    1: "| L2 |",
-    2: "| L3 |",
-    3: "| L4 |"
-}
-
-while True:
-    # Store new coordinates to properly update on new turn
-    [posA, posB] = playerChoice([posA, posB], playerA)
-    [posC, posD] = playerChoice([posC, posD], playerB)
