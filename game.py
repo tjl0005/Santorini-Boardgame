@@ -1,9 +1,8 @@
 import re
 from exceptions import SelectionError, BoundsError, SpaceTakenError
-# TODO: Remove feature where you cannot build higher than current level, not a rule, oops
-# TODO: Convert player lists into dictionaries in config
-# TODO: Move counter
-# TODO: Log
+
+# TODO: implement gods mechanic
+# TODO: Expand log functions, user input and error messages included
 
 workerLoc = []
 buildLoc = []
@@ -13,10 +12,10 @@ buildDetails = []
 board = [["|    |" for a in range(5)] for b in range(5)]
 
 buildCode = {
-    0: "| L1 |",
-    1: "| L2 |",
-    2: "| L3 |",
-    3: "| L4 |"
+    1: "| L1 |",
+    2: "| L2 |",
+    3: "| L3 |",
+    4: "| X |"
 }
 
 
@@ -54,6 +53,8 @@ def checkStart(pos1, pos2):
         raise SpaceTakenError
     elif iPos1 in workerLoc or iPos2 in workerLoc:  # Other player taken the space
         raise SpaceTakenError
+    elif any(0 < val > 4 for val in iPos1) or any(0 < val > 4 for val in iPos2):  # Given positions out of bounds
+        raise SelectionError
     else:  # Valid position given
         validPos = iPos1, iPos2
         # Track all starting positions
@@ -98,7 +99,7 @@ def playerChoice(startPos, player):
                 startPos[active] = playerMove(player, startPos[active], worker)
                 return startPos
             elif decision == "Build":
-                playerBuild(startPos[active], player, active)
+                playerBuild(startPos[active])
                 return startPos
             else:
                 print("Fault 2")
@@ -132,20 +133,32 @@ def playerMove(player, startPos, worker):
                 print("Fault 5")
                 raise BoundsError
 
-            elif type(climb[1]) is int:  # Moving between buildings on same level
-                board[startPos[0]][startPos[1]] = buildCode[climb[1] - 1]
+            elif type(climb[1]) is str:  # Moving between buildings on same level
+                if climb[1] == "desc":
+                    print("Detected as going down again")
+                    currentLevel = findBuildLevel(startPos)
+                    board[startPos[0]][startPos[1]] = buildCode[currentLevel]
+                    board[startPos[0]][startPos[1]] = buildCode[currentLevel]
+                else:
+                    print("Moving between same level buildings")
+                    print(climb[1])
+                    board[startPos[0]][startPos[1]] = buildCode[int(climb[1])]
 
             else:  # Going up a level
-                if climb[1] > 0:  # If higher than L1 need to replace old building
+                if climb[1] > 1:  # If higher than L1 need to replace old building
+                    print("Climbing higher than L1")
                     board[startPos[0]][startPos[1]] = buildCode[climb[1] - 1]
                 else:  # No building occupied so a blanks space
+                    print("Climbing L1, so clearing old position")
                     clearPos(startPos)
 
-        elif startPos in buildLoc:  # Player descending
+        elif startPos in buildLoc:  # Player descending from L1
             currentLevel = findBuildLevel(startPos)
-            board[startPos[0]][startPos[1]] = buildCode[currentLevel-1]
+            board[startPos[0]][startPos[1]] = buildCode[currentLevel]
+            print("Player descending")
 
         else:
+            print("Standard movement")
             clearPos(startPos)
 
         workerLoc[workerLoc.index(startPos)] = newPos
@@ -158,25 +171,29 @@ def playerClimb(newPos, player, i):
     pRef, k, j = findWorkerLevel(player, i)
     buildingLevel = findBuildLevel(newPos)
 
-    if (buildingLevel - 1) == player[j]:  # Player is going to climb up one level
-        player[j] += 1  # Update player level
-        pRef = re.sub("[0-9]", "", pRef)  # Remove level reference
-        player[i] = "| {}{} |".format(pRef, player[j])  # Update player reference
+    if (buildingLevel - 1) == player[j]:  # Worker is going to climb up one level
+        print("Worker climbing up a level")
+        player[j] += 1  # Update worker level
+        updatePlayerRef(pRef, player, i, j)
 
-        if player[j] == 3:
-            print("Player {}, has won!".format(player[2]))
-            exit()
-
-        return True, True
+        return True, buildingLevel
 
     elif buildingLevel == player[j]:  # Worker going across buildings
-        return True, buildingLevel
+        print("Going across buildings")
+        return True, str(buildingLevel)
+
+    elif player[j] > buildingLevel:
+        print("Player descending builder higher than L1")
+        player[j] -= 1
+        updatePlayerRef(pRef, player, i, j)
+
+        return True, "desc"
 
     else:  # Standard movement detection
         return False, ""
 
 
-def playerBuild(startPos, player, i):
+def playerBuild(startPos):
     move = input("Direction? ")
 
     buildPos = newPosition(move, [startPos[0], startPos[1]])
@@ -184,21 +201,24 @@ def playerBuild(startPos, player, i):
     if buildPos in workerLoc:  # Space is taken by a worker
         raise SelectionError
     elif buildPos not in buildLoc:  # Space not built on so know it's the first level
-        newLevel = buildCode[0]
+        newLevel = buildCode[1]
+        buildLoc.append(buildPos)  # Store building position in taken locations to avoid collisions
+
     else:  # Building higher than l1
-        pRef, k, j = findWorkerLevel(player, i)
         buildLevel = findBuildLevel(buildPos)
 
-        if buildLevel == player[j]:  # Check worker not attempting to build higher than valid level
-            newLevel = buildCode[buildLevel]
-        else:
-            print("Fault 7")
-            raise SelectionError
+        newLevel = buildCode[buildLevel + 1]
+
+        # Remove old record from build details
+        for i in range(len(buildDetails)):
+            rec = buildDetails[i]
+            if rec[0] == buildPos:
+                buildDetails.remove(rec)
+                break
 
     board[buildPos[0]][buildPos[1]] = newLevel  # Update the board with new building position
 
-    buildLoc.append(buildPos)  # Store building position in taken locations to avoid collisions
-    buildDetails.append([buildPos, newLevel])  # Update building tracker
+    buildDetails.append([buildPos, newLevel])  # Add new record to building tracker
 
 
 def findWorkerLevel(player, i):
@@ -232,6 +252,15 @@ def workerIndex(worker):
 
 def clearPos(startPos):
     board[startPos[0]][startPos[1]] = "|    |"  # Clear icon from old position
+
+
+def updatePlayerRef(pRef, player, i, j):
+    pRef = re.sub("[0-9]", "", pRef)  # Remove level reference
+    player[i] = "| {}{} |".format(pRef, player[j])  # Update worker reference
+
+    if player[j] == 3:
+        print("Player {}, has won!".format(player[2]))
+        exit()
 
 
 def newPosition(move, newPos):
