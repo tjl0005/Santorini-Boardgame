@@ -1,12 +1,10 @@
 import re
 from exceptions import SelectionError, BoundsError, SpaceTakenError
 
-# TODO: implement gods mechanic
-# TODO: Expand log functions, user input and error messages included
-
 workerLoc = []
 buildLoc = []
 buildDetails = []
+moves = ["W", "A", "S", "D", "WA", "WD", "SA", "SD"]
 
 # Generate board
 board = [["|    |" for a in range(5)] for b in range(5)]
@@ -15,109 +13,25 @@ buildCode = {
     1: "| L1 |",
     2: "| L2 |",
     3: "| L3 |",
-    4: "| X |"
+    4: "| () |"
 }
 
 
-def setStart(player):
-    """Uses user inputs to decide on the location for each of the workers and stores the input as formatted coordinates
-    in the format of [2,2] are converted into "2 2"
-    Contains exceptions for formatting issues from the user
-    """
-    while True:
-        try:
-            # PLayer selects their starting position
-            pos1 = input("Select starting position (e.g. 2,2) for {}: ".format(player[0]))
-            pos2 = input("Select starting position (e.g. 1,1) for {}: ".format(player[1]))
-
-            # Split input into individual coordinates
-            pos1, pos2 = pos1.split(","), pos2.split(",")
-
-            return checkStart(pos1, pos2)
-
-        except ValueError:
-            print("One of more selections were invalid, try again.".format(player))
-        except IndexError:
-            print("Please match requested format, try again")
-        except SpaceTakenError:
-            print("A space you selected is taken, please try again")
-        except SelectionError:
-            print("Please enter a valid position")
+def getBuildDetails():
+    return buildDetails
 
 
-def checkStart(pos1, pos2):
-    """Runs checks on the given start coordinates to ensure they are valid"""
-    iPos1, iPos2 = [int(pos1[0]), int(pos1[1])], [int(pos2[0]), int(pos2[1])]
-
-    if pos1 == pos2:  # Current player already taken the space
-        raise SpaceTakenError
-    elif iPos1 in workerLoc or iPos2 in workerLoc:  # Other player taken the space
-        raise SpaceTakenError
-    elif any(0 < val > 4 for val in iPos1) or any(0 < val > 4 for val in iPos2):  # Given positions out of bounds
-        raise SelectionError
-    else:  # Valid position given
-        validPos = iPos1, iPos2
-        # Track all starting positions
-        workerLoc.append(validPos[0])
-        workerLoc.append(validPos[1])
-
-        return validPos
+def getWorkerLoc():
+    return workerLoc
 
 
-def prepPlayer(player):
-    """Uses the setStart function twice to get the starting locations of each worker. The returned coordinates are then
-    used to update the board with the locations of the workers and display them to the user."""
-    startPos1, startPos2 = setStart(player)
-
-    board[startPos1[0]][startPos1[1]] = player[0]
-    board[startPos2[0]][startPos2[1]] = player[1]
-
-    return startPos1, startPos2
+def getBuildLoc():
+    return buildLoc
 
 
-def playerChoice(startPos, player):
-    while True:
-        try:
-            # Display board
-            for i in board:
-                print("------ ------ ------ ------ ------")
-                print(" ".join(i))
-
-            print("------ ------ ------ ------ ------")
-
-            worker = input("Select worker, {} or {} ? ".format(player[0], player[1]))
-
-            # Player selected invalid character
-            if worker not in ["A", "B", "C", "D"]:
-                print("Fault 1")
-                raise SelectionError
-
-            active, static = workerIndex(worker)
-            decision = input("Move or Build? ")
-
-            if decision == "Move":
-                startPos[active] = playerMove(player, startPos[active], worker)
-                return startPos
-            elif decision == "Build":
-                playerBuild(startPos[active])
-                return startPos
-            else:
-                print("Fault 2")
-                raise SelectionError
-
-        except BoundsError:
-            print("Out of bounds, please try again")
-        except SpaceTakenError:
-            print("Space taken, please try again")
-        except SelectionError:
-            print("Invalid selection, please try again.")
-
-
-def playerMove(player, startPos, worker):
-    move = input("Direction? ")
-
-    active, static = workerIndex(worker)
-    newPos = newPosition(move, [startPos[0], startPos[1]])
+def workerMove(player, startPos, active, newPos):
+    """Complete task of moving the player on the board and detecting if selected movement requires a worker to climb
+    or descend"""
 
     if 5 in newPos or -1 in newPos:  # Player attempting to go out of bounds
         print("Fault 3")
@@ -127,7 +41,7 @@ def playerMove(player, startPos, worker):
         raise SpaceTakenError
     else:  # Standard movement
         if newPos in buildLoc:  # Check if space can be climbed and how so
-            climb = playerClimb(newPos, player, active)
+            climb = workerClimb(newPos, player, active)
 
             if not climb[0]:  # Cannot climb
                 print("Fault 5")
@@ -167,14 +81,15 @@ def playerMove(player, startPos, worker):
         return [newPos[0], newPos[1]]
 
 
-def playerClimb(newPos, player, i):
+def workerClimb(newPos, player, i):
+    """Correctly update worker level and detect if climbing, descending or jumping"""
     pRef, k, j = findWorkerLevel(player, i)
     buildingLevel = findBuildLevel(newPos)
 
     if (buildingLevel - 1) == player[j]:  # Worker is going to climb up one level
         print("Worker climbing up a level")
         player[j] += 1  # Update worker level
-        updatePlayerRef(pRef, player, i, j)
+        updateRef(pRef, player, i, j)
 
         return True, buildingLevel
 
@@ -183,9 +98,9 @@ def playerClimb(newPos, player, i):
         return True, str(buildingLevel)
 
     elif player[j] > buildingLevel:
-        print("Player descending builder higher than L1")
+        print("Player descending building higher than L1")
         player[j] -= 1
-        updatePlayerRef(pRef, player, i, j)
+        updateRef(pRef, player, i, j)
 
         return True, "desc"
 
@@ -193,11 +108,8 @@ def playerClimb(newPos, player, i):
         return False, ""
 
 
-def playerBuild(startPos):
-    move = input("Direction? ")
-
-    buildPos = newPosition(move, [startPos[0], startPos[1]])
-
+def workerBuild(buildPos):
+    """Allows selected worker to build on a specified space on the board"""
     if buildPos in workerLoc:  # Space is taken by a worker
         raise SelectionError
     elif buildPos not in buildLoc:  # Space not built on so know it's the first level
@@ -222,8 +134,10 @@ def playerBuild(startPos):
 
 
 def findWorkerLevel(player, i):
+    # Check use of returning pRef
+    """Returns the player reference and the indexes for the specified workers reference and level"""
     pRef = player[i].replace("|", "").replace(" ", "")  # Standardise reference
-
+    pRef = re.sub("[0-9]", "", pRef)
     if pRef == "A" or pRef == "C":
         k, j = 0, 3
     else:
@@ -234,27 +148,20 @@ def findWorkerLevel(player, i):
 
 
 def findBuildLevel(buildPos):
+    """Find the level of a specified building and return it as an int"""
     for i in buildDetails:
         if i[0] == buildPos:  # Find matching record
             return int(i[1].replace("|", "").replace(" ", "").replace("L", ""))  # Standardise reference
 
 
-def workerIndex(worker):
-    if worker == "A" or worker == "C":
-        active, static = 0, 1
-    elif worker == "B" or worker == "D":
-        active, static = 1, 0
-    else:
-        raise SelectionError
-
-    return active, static
-
-
 def clearPos(startPos):
+    """Clear a specified position from the board"""
     board[startPos[0]][startPos[1]] = "|    |"  # Clear icon from old position
 
 
-def updatePlayerRef(pRef, player, i, j):
+def updateRef(pRef, player, i, j):
+    """Take a player reference and update it"""
+    # Test if old pRef required
     pRef = re.sub("[0-9]", "", pRef)  # Remove level reference
     player[i] = "| {}{} |".format(pRef, player[j])  # Update worker reference
 
@@ -263,8 +170,10 @@ def updatePlayerRef(pRef, player, i, j):
         exit()
 
 
-def newPosition(move, newPos):
-    match move:
+def newPosition(direction, pos):
+    """Calculate new position by specified direction"""
+    newPos = pos[:]  # Making a copy
+    match direction:
         case "W":
             newPos[0] -= 1
         case "A":
