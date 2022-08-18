@@ -150,7 +150,8 @@ def findWorkerLevel(player, i):
 def findBuildLevel(buildPos):
     """Find the level of a specified building and return it as an int"""
     for i in buildDetails:
-        if i[0] == buildPos:  # Find matching record
+        print(i[0])
+        if i[0] == buildPos and i[1] != "| () |":  # Find matching record
             return int(i[1].replace("|", "").replace(" ", "").replace("L", ""))  # Standardise reference
 
 

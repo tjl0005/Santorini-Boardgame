@@ -11,11 +11,11 @@ display = True
 posA, posB = prepPlayer(playerA)
 posC, posD = prepPlayer(playerB)
 
-sys.stdout = Logger()    # Log does not save input so starting after initial inputs
+# sys.stdout = Logger()    # Log does not save input so starting after initial inputs
 
 while True:
     # Store new coordinates to properly update on new turn
     posA, posB = playerChoice([posA, posB], playerA)
     # posC, posD = playerChoice([posC, posD], playerB)
-    basicAI(posC, playerB)
+    posC, posD = basicAI([posC, posD], playerB)
     # posC, posD = basicAI(posC, playerB, bDetails())

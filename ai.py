@@ -1,11 +1,9 @@
 from game import newPosition, findBuildLevel, findWorkerLevel, getWorkerLoc, getBuildDetails, getBuildLoc, workerMove, \
     workerBuild
 
-# Added ability to determine direction
-# Function to select best positions on the board
-# Skeleton of basic AI to compete against
-
 moves = ["W", "A", "S", "D", "WA", "WD", "SA", "SD"]
+
+
 
 
 def getPossibleMoves(startPos, active, player, workerLoc, buildLoc):
@@ -63,20 +61,22 @@ def getHighest():
     highest = []
     buildDetails = getBuildDetails()
 
+    if not buildDetails:
+        return highest
+
     for build in buildDetails:
         build = [build[0], build[1].replace("|", "").replace(" ", "").replace("L", "")]  # Standardise reference
 
-        if not highest:  # First building so automatically the highest
+        if not highest:  # First building to be checked so automatically the highest
             highest = [build]
 
         else:
-            for i in range(len(highest)):
-                int(highest[i][1].replace("|", "").replace(" ", "").replace("L", ""))
+            for i in range(len(buildDetails) - 1):  # Already checked first building
 
-                if highest[i][1] < build[1]:  # New building higher level so replace old records
+                if highest[0][1] < build[1] and highest[0][0] != build[0]:  # New building higher level so replace old records
                     highest = [build]
 
-                elif highest[i][1] == build[1]:  # New building same level so append
+                elif highest[0][1] == build[1] and highest[0][0] != build[0]:  # New building same level so append
                     highest.append(build)
 
     return highest
@@ -87,11 +87,14 @@ def getBest(highest, reachable):
     best = []
     bLevel = int(highest[0][1].replace("|", "").replace(" ", "").replace("L", ""))
 
-    print("Reachable: {}".format(reachable))
-
     for pos in reachable:
-        posReach = canReach(pos, highest, bLevel, "climb")
-        best.append(len(posReach))
+        posReach = len(canReach(pos, highest, bLevel, "climb"))
+
+        if pos in getBuildLoc():  # Being able to climb selected pos adds points
+            posReach += 1
+
+        print("Score: {}, for Pos: {}".format(posReach, pos))
+        best.append(posReach)
 
     best = best.index(max(best))
 
@@ -110,18 +113,16 @@ def canReach(startPos, highest, cLevel, movement):
     for op in moves:
         pos = newPosition(op, startPos)
 
-        # Position in bounds and empty
-        if pos not in workerLoc and not any(0 < val > 4 for val in pos):
+        # Position in bounds and not occupied by worker
+        if pos not in workerLoc and not any(0 > val < 5 for val in pos) and pos not in reach:
             if pos in buildLoc and movement == "climb":
                 bLevel = findBuildLevel(pos)
+
                 if bLevel - 1 == cLevel:
-                    print("Found space to climb")
                     reach.append(pos)
                 elif bLevel == cLevel:
-                    print("Found space to cross")
                     reach.append(pos)
                 elif bLevel < cLevel:
-                    print("Found space to descend from")
                     reach.append(pos)
 
                 # Find match
@@ -130,66 +131,117 @@ def canReach(startPos, highest, cLevel, movement):
                         match.append(val[0])
 
             elif pos not in buildLoc and movement == "move":
-                print("Found position to move to")
+                match.append(pos)
+
+            else:  # If wanting to build, can build at any level as long as no worker
                 match.append(pos)
 
     return match
 
 
 def bestBuild(startPos, reach):
-    # Attempt to build towards friend worker
-    friend = getDirection(startPos, getWorkerLoc()[3])
-    friendDir = newPosition(friend, startPos)
+    found = False
+    for build in getBuildDetails():  # First check if a nearby building can be used
+        if build[0] in reach:
+            print("Building nearby")
+            found = True
+            workerBuild(build[0])
 
-    if friendDir in reach:
-        print("Can build towards friend")
-        workerBuild(friendDir)
+    if not found:
+        # Attempt to build towards friend worker, need to update to always move towards
+        friend = getDirection(startPos, getWorkerLoc()[3])
+        friendPos = newPosition(friend, startPos)
+        if friendPos in reach:
+            print("Can build towards friend space")
+            workerBuild(friendPos)
+        else:
+            print("Cannot build towards other worker so building in next space")
+            workerBuild(reach[0])
+
+
+def canBuild(highest, cLevel, startPos):
+    # if cLevel == int(highest[0][1]) - 1:  # Able to build to the best height so do it
+    #     print("Can build to current highest height")
+    #     return bestBuild(startPos, canReach(startPos, highest, cLevel, "build"))
+
+    reachable = canReach(startPos, highest, cLevel, "climb")
+    buildSame = []
+    buildNew = []
+
+    # Going to climb or build
+    for pos in reachable:
+        # Know there is a building to check
+        if pos in getBuildLoc():
+            bLevel = findBuildLevel(pos)
+            # If worker can climb higher promise that
+            if bLevel > cLevel:
+                print("Building higher so climbing: {}".format(pos))
+                return newPosition(getDirection(startPos, pos), startPos)
+
+            # Opportunity for worker to build on top of another building
+            elif bLevel == cLevel:
+                buildSame.append(pos)
+
+        # Worker has to build new
+        elif pos not in getWorkerLoc():
+            buildNew.append(pos)
+
+    # Shows priority of opportunities
+    if buildSame:
+        print("Building same level so building on it")
+        return workerBuild(buildSame[0])
+    elif buildNew:
+        print("No available buildings so building new one")
+        return bestBuild(startPos, canReach(startPos, highest, cLevel, "build"))
     else:
-        print("Cannot build towards other worker so building in next space")
-        workerBuild(reach[0])
+        print("No position to build or move to")
+        # No position to build or move to
+        return getBest(highest, reachable)
 
 
 def basicAI(startPos, player):
     highest = getHighest()
-    hLevel = int(highest[0][1])
     cLevel = player[3]  # Worker level for C
+    dLevel = player[4]  # Worker level for D
 
-    if not highest:  # There are no higher buildings
+    if not highest:  # There are no higher buildings so build one
         bestBuild(startPos, canReach(startPos, highest, cLevel, "move"))
 
-    elif hLevel != cLevel:  # Can move to higher buildings
-        if len(highest) > 1:  # There's a few higher buildings so need to find which can be reached
+    # Can move to higher buildings
+    elif int(highest[0][1]) != cLevel:
+        # There's a few higher buildings so need to find which can be reached
+        if len(highest) > 1:
             print("Need to select closest one")
+
             reachable = canReach(startPos, highest, cLevel, "climb")
-            getBest(highest, reachable)  # Use near positions to find which is most profitable
-            direction = getDirection(startPos, getBest(highest, reachable))
+            print("Reachable: {}".format(reachable))
+            print("Highest: {}".format(highest))
 
-            workerMove(player, startPos, 0, newPosition(direction, startPos))
+            canBuild(highest, cLevel, startPos)
 
-        else:  # Only 1 building that needs to be moved towards
+        # Only 1 building that needs to be moved towards
+        else:
+            print("Attempting to move towards highest building")
             direction = getDirection(startPos, highest[0][0])  # Move in this direction
+
             movePos = newPosition(direction, startPos)
 
-            # Check if AI can move in direction of building, build a new one nearby
-            if movePos not in getWorkerLoc():
-                workerMove(player, startPos, 0, movePos)
+            if movePos not in getWorkerLoc() and int(highest[0][1]) - 1 == cLevel:
+                print("Moving towards direction of highest building")
+                return workerMove(player, startPos, 0, movePos)
             else:
-                bestBuild(startPos, canReach(startPos, highest, cLevel, "move"))
+                print("Building towards highest building")
+                bestBuild(startPos, canReach(startPos, highest, cLevel, "build"))
 
     else:  # Already at the highest level
         print("On highest level")
-        options = []
-        for op in highest:
-            if op not in getWorkerLoc() and not any(0 < val > 4 for val in op):  # Looking for valid spaces
-                print("Can build nearby")
-            else:
-                options.append(op)
-                print("Making list of unreachable buildings")
 
-        if options:
-            print("Need to get closest building to move towards")
+        pos = canBuild(highest, cLevel, startPos)
 
-    print("AND NOW AI HAS ENDED")
+        if pos:
+            workerMove(player, startPos, 0, pos)
+
+    return startPos
 
 
 def minimax():
