@@ -3,7 +3,7 @@ from exceptions import SelectionError, BoundsError, SpaceTakenError
 from ui import getStartPos, displayBoard
 
 
-def prepPlayer(player):
+def setBoard(player):
     """Uses the setStart function twice to get the starting locations of each worker. The returned coordinates are then
     used to update the board with the locations of the workers and display them to the user."""
     startPos1, startPos2 = getStartPos(player, workerLoc)
@@ -28,23 +28,18 @@ def playerChoice(startPos, player):
                 raise SelectionError
 
             active = findWorkerIndex(worker)[0]
-            decision = input("Move or Build? ")
-
             activeStartPos = startPos[active]  # Start position of selected worker
 
+            decision = input("Move or Build? ")
+            newPos = newPosition(input("Direction? "), activeStartPos)
+
             if decision == "Move":
-                newPos = newPosition(input("Direction? "), activeStartPos)
                 startPos[active] = workerMove(player, activeStartPos, active, newPos)
-
             elif decision == "Build":
-                newPos = newPosition(input("Direction? "), activeStartPos)
                 workerBuild(newPos)
-
             else:
                 print("Fault 2")
                 raise SelectionError
-
-            displayBoard(board)
 
             return startPos
 
@@ -58,11 +53,9 @@ def playerChoice(startPos, player):
 
 def findWorkerIndex(worker):
     """Find the index of the specified workers"""
-    if worker == "A" or worker == "C":
-        active, static = 0, 1
-    elif worker == "B" or worker == "D":
-        active, static = 1, 0
+    if worker in ["A", "C"]:
+        return 0, 1
+    elif worker in ["B", "D"]:
+        return 1, 0
     else:
         raise SelectionError
-
-    return active, static

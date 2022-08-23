@@ -36,7 +36,9 @@ def checkStart(pos1, pos2, workerPos):
         raise SpaceTakenError
     elif pos1 in workerPos or pos2 in workerPos:  # Other player taken the space
         raise SpaceTakenError
-    elif any(0 > val < 5 for val in pos1) or any(0 > val < 5 for val in pos2):  # Given positions out of bounds
+    elif any(0 > val for val in pos1) or any(0 > val for val in pos2):  # Given positions out of bounds
+        raise SelectionError
+    elif any(val > 4 for val in pos1) or any(val > 4 for val in pos2):  # Given positions out of bounds
         raise SelectionError
     else:  # Valid position given
         validPos = pos1, pos2
