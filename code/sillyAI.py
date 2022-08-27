@@ -1,3 +1,4 @@
+from ai import possiblePositions
 from game import newPosition, findBuildLevel, getWorkerLoc, getBuildDetails, getBuildLoc, workerMove, workerBuild, \
     getMoves, board
 from ui import displayBoard
@@ -9,6 +10,8 @@ def bot(startPos, player, levelIndex, refIndex):
     print("Starting in AI: {}".format(startPos))
     highest = getHighest()
     cLevel = int(stdRef(player[levelIndex]))
+
+    print("Can move: {}".format(possiblePositions(startPos, player[refIndex])))
 
     if not highest:  # There are no higher buildings so build one
         bestBuild(startPos, canReach(startPos, highest, cLevel, "move"), levelIndex)

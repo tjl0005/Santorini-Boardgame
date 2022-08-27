@@ -63,7 +63,7 @@ def workerMove(player, startPos, active, newPos):
 
 def workerClimb(climbPos, player, i):
     """Correctly update worker level and detect if climbing, descending or jumping"""
-    pRef, k, j = findWorkerLevel(player[i])
+    pRef, k, j = findLevelIndex(player[i])
     buildingLevel = findBuildLevel(climbPos)
 
     if (buildingLevel - 1) == player[j]:  # Worker is going to climb up one level
@@ -139,10 +139,12 @@ def newPosition(direction, pos):
     return newPos
 
 
-def findWorkerLevel(pRef):
+def findLevelIndex(pRef):
     # Check use of returning pRef
     """Returns the player reference and the indexes for the specified workers reference and level"""
+    pRef = stdRef(pRef)
     pRef = removeLevel(pRef)
+
     if pRef in ["A", "C"]:
         k, j = 0, 3
     else:
