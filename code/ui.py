@@ -3,8 +3,6 @@ from exceptions import SelectionError, SpaceTakenError
 
 def getStartPos(player, workerPos):
     """Uses user inputs to decide on the location for each of the workers and stores the input as formatted coordinates
-    in the format of [2,2] are converted into "2 2"
-    Contains exceptions for formatting issues from the user
     """
     while True:
         try:

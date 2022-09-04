@@ -1,17 +1,14 @@
-from ai import possiblePositions
 from game import newPosition, findBuildLevel, getWorkerLoc, getBuildDetails, getBuildLoc, workerMove, workerBuild, \
     getMoves, board
 from ui import displayBoard
+
+
 # Not in a great state but helped to understand
-
-
 def bot(startPos, player, levelIndex, refIndex):
     """Uses factors of the current selected workers position to select a good move, not great, just okay really"""
     print("Starting in AI: {}".format(startPos))
     highest = getHighest()
     cLevel = int(stdRef(player[levelIndex]))
-
-    print("Can move: {}".format(possiblePositions(startPos, player[refIndex])))
 
     if not highest:  # There are no higher buildings so build one
         bestBuild(startPos, canReach(startPos, highest, cLevel, "move"), levelIndex)

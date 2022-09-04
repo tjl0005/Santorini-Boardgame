@@ -51,6 +51,11 @@ def playerChoice(startPos, player):
             print("Invalid selection, please try again.")
 
 
+def initialPlayers():
+    """Return starting player values"""
+    return ["| A0 |", "| B0 |", "One", 0, 0], ["| C0 |", "| D0 |", "Two", 0, 0]
+
+
 def findWorkerIndex(worker):
     """Find the index of the specified workers"""
     if worker in ["A", "C"]:

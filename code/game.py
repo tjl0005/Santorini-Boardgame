@@ -4,8 +4,8 @@ import re
 workerLoc = []
 buildLoc = []
 buildDetails = []
-moves = ["W", "A", "S", "D", "WA", "WD", "SA", "SD"]
 
+# Dictionary to get the label for a specified build level
 buildCode = {
     1: "| L1 |",
     2: "| L2 |",
@@ -104,13 +104,13 @@ def workerBuild(buildPos):
                 break  # Prevent further searching
 
     board[buildPos[0]][buildPos[1]] = newLevel  # Update the board with new building position
-
     buildDetails.append([buildPos, newLevel])  # Add new record to building tracker
 
 
 def newPosition(direction, pos):
     """Calculate new position by specified direction"""
     newPos = pos[:]  # Making a copy
+
     match direction:
         case "W":
             newPos[0] -= 1
@@ -175,6 +175,7 @@ def stdRef(ref):
 
 
 def removeLevel(ref):
+    """Return given value without numerical values"""
     return re.sub("[0-9]", "", ref)
 
 
@@ -184,16 +185,20 @@ def clearPos(startPos):
 
 
 def getMoves():
+    """Returns all potential move representations"""
     return ["W", "A", "S", "D", "WA", "WD", "SA", "SD"]
 
 
 def getBuildDetails():
+    """Return current details of the buildings on the board"""
     return buildDetails
 
 
 def getWorkerLoc():
+    """Return all workers current locations"""
     return workerLoc
 
 
 def getBuildLoc():
+    """Return all buildings current locations"""
     return buildLoc
