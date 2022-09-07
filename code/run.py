@@ -1,7 +1,7 @@
 from ai import playAI
-from player import setBoard, playerChoice, initialPlayers
+from player import setBoard, playerChoice, initialSetup
 
-playerA, playerB = initialPlayers()
+playerA, playerB = initialSetup()
 
 # Position players characters
 posA, posB = setBoard(playerA)
@@ -9,7 +9,8 @@ posC, posD = setBoard(playerB)
 
 decision = input("Please choose 2 Players (2) or Easy. ")
 
-if decision == "2" or decision == "Two":
+
+if decision in [2, "Two", "two"]:
     while True:
         posA, posB = playerChoice([posA, posB], playerA)
         posC, posD = playerChoice([posC, posD], playerB)

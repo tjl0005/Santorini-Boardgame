@@ -96,6 +96,7 @@ def minimax(pos, depth, alpha, beta, refIndex, movement, maxPlayer, player):
                 bestPos = child
             if beta <= alpha:
                 break  # Prune remaining children
+
         return maxEval, bestPos
 
     else:  # Minimising
@@ -113,6 +114,7 @@ def minimax(pos, depth, alpha, beta, refIndex, movement, maxPlayer, player):
                 bestPos = child
             if beta <= alpha:
                 break
+
         return minEval, bestPos
 
 

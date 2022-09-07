@@ -1,5 +1,4 @@
 from exceptions import SelectionError, BoundsError, SpaceTakenError
-import re
 
 workerLoc = []
 buildLoc = []
@@ -176,7 +175,7 @@ def stdRef(ref):
 
 def removeLevel(ref):
     """Return given value without numerical values"""
-    return re.sub("[0-9]", "", ref)
+    return ''.join([i for i in ref if not i.isdigit()])
 
 
 def clearPos(startPos):

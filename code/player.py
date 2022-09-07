@@ -33,9 +33,9 @@ def playerChoice(startPos, player):
             decision = input("Move or Build? ")
             newPos = newPosition(input("Direction? "), activeStartPos)
 
-            if decision == "Move":
+            if decision in ["Move", "move"]:
                 startPos[active] = workerMove(player, activeStartPos, active, newPos)
-            elif decision == "Build":
+            elif decision in ["Build", "build"]:
                 workerBuild(newPos)
             else:
                 print("Fault 2")
@@ -51,9 +51,11 @@ def playerChoice(startPos, player):
             print("Invalid selection, please try again.")
 
 
-def initialPlayers():
-    """Return starting player values"""
-    return ["| A0 |", "| B0 |", "One", 0, 0], ["| C0 |", "| D0 |", "Two", 0, 0]
+def initialSetup():
+    """Initialise board and return starting player values"""
+    one, two = ["| A0 |", "| B0 |", "One", 0, 0], ["| C0 |", "| D0 |", "Two", 0, 0]
+
+    return one, two
 
 
 def findWorkerIndex(worker):
