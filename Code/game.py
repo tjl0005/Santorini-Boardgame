@@ -14,9 +14,10 @@ buildCode = {
 
 # Generate board
 board = [["|    |" for a in range(5)] for b in range(5)]
+moves = ["W", "A", "S", "D", "WA", "WD", "SA", "SD"]
 
 
-def workerMove(player, startPos, active, newPos):
+def workerMove(player, startPos, refIndex, newPos):
     """Complete task of moving the player on the board and detecting if selected movement requires a worker to climb
     or descend"""
 
@@ -28,7 +29,7 @@ def workerMove(player, startPos, active, newPos):
         raise SpaceTakenError
     else:  # Standard movement
         if newPos in buildLoc:  # Check if space can be climbed and how so
-            climb = workerClimb(newPos, player, active)
+            climb = workerClimb(newPos, player, refIndex)
 
             if not climb[0]:  # Cannot climb
                 raise BoundsError
@@ -55,28 +56,28 @@ def workerMove(player, startPos, active, newPos):
             clearPos(startPos)
 
         workerLoc[workerLoc.index(startPos)] = newPos
-        board[newPos[0]][newPos[1]] = player[active]  # Update player position on the board
+        board[newPos[0]][newPos[1]] = player[refIndex]  # Update player position on the board
 
         return [newPos[0], newPos[1]]
 
 
-def workerClimb(climbPos, player, i):
+def workerClimb(climbPos, player, refIndex):
     """Correctly update worker level and detect if climbing, descending or jumping"""
-    pRef, k, j = findLevelIndex(player[i])
+    pRef, levelIndex = findLevelIndex(player[refIndex])
     buildingLevel = findBuildLevel(climbPos)
 
-    if (buildingLevel - 1) == player[j]:  # Worker is going to climb up one level
-        player[j] += 1  # Update worker level
-        updateRef(pRef, player, i, j)
+    if (buildingLevel - 1) == player[levelIndex]:  # Worker is going to climb up one level
+        player[levelIndex] += 1  # Update worker level
+        updateRef(pRef, player, refIndex, levelIndex)
 
         return True, buildingLevel
 
-    elif buildingLevel == player[j]:  # Worker going across buildings
+    elif buildingLevel == player[levelIndex]:  # Worker going across buildings
         return True, str(buildingLevel)
 
-    elif player[j] > buildingLevel:  # Worker is descending
-        player[j] -= 1
-        updateRef(pRef, player, i, j)
+    elif player[levelIndex] > buildingLevel:  # Worker is descending
+        player[levelIndex] -= 1
+        updateRef(pRef, player, refIndex, levelIndex)
 
         return True, "desc"
 
@@ -150,7 +151,7 @@ def findLevelIndex(pRef):
         k, j = 1, 4
 
     # Reference to the worker, worker tag and level index
-    return pRef, k, j
+    return pRef, j
 
 
 def findBuildLevel(buildPos):
@@ -160,11 +161,11 @@ def findBuildLevel(buildPos):
             return int(i[1].replace("|", "").replace(" ", "").replace("L", ""))  # Standardise reference
 
 
-def updateRef(pRef, player, i, j):
+def updateRef(pRef, player, refIndex, levelIndex):
     """Take a player reference and update it"""
-    player[i] = "| {}{} |".format(removeLevel(stdRef(pRef)), player[j])  # Update worker reference
-    if player[j] == 3:
-        print("Player {}, has won!".format(player[2]))
+    player[refIndex] = "| {}{} |".format(removeLevel(stdRef(pRef)), player[levelIndex])  # Update worker reference
+    if player[levelIndex] == 3:
+        print("\nWow! Player {}, has won!".format(player[2]))
         exit()
 
 
@@ -183,21 +184,6 @@ def clearPos(startPos):
     board[startPos[0]][startPos[1]] = "|    |"  # Clear icon from old position
 
 
-def getMoves():
-    """Returns all potential move representations"""
-    return ["W", "A", "S", "D", "WA", "WD", "SA", "SD"]
-
-
-def getBuildDetails():
-    """Return current details of the buildings on the board"""
-    return buildDetails
-
-
-def getWorkerLoc():
-    """Return all workers current locations"""
-    return workerLoc
-
-
-def getBuildLoc():
-    """Return all buildings current locations"""
-    return buildLoc
+def outBounds(pos):
+    if any(0 > val for val in pos) or any(val > 4 for val in pos):
+        return True

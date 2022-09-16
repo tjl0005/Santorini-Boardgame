@@ -1,18 +1,17 @@
 from exceptions import SelectionError, SpaceTakenError
+from game import board, outBounds
 
 
 def getStartPos(player, workerPos):
-    """Uses user inputs to decide on the location for each of the workers and stores the input as formatted coordinates
-    """
+    """Uses user inputs to decide on the location for each of the workers and stores the input as coordinates"""
     while True:
         try:
-            # PLayer selects their starting position
-            pos1 = input("Select starting position (e.g. 2,2) for {}: ".format(player[0]))
-            pos2 = input("Select starting position (e.g. 1,1) for {}: ".format(player[1]))
+            # PLayer selects their starting position, which is split
+            pos1 = input("Select starting position (e.g. 2,2) for {}: ".format(player[0])).split(",")
+            pos1 = [int(pos1[0]), int(pos1[1])]
 
-            # Split input into individual coordinates
-            pos1, pos2 = pos1.split(","), pos2.split(",")
-            pos1, pos2 = [int(pos1[0]), int(pos1[1])], [int(pos2[0]), int(pos2[1])]
+            pos2 = input("Select starting position (e.g. 1,1) for {}: ".format(player[1])).split(",")
+            pos2 = [int(pos2[0]), int(pos2[1])]
 
             check = checkStart(pos1, pos2, workerPos)
 
@@ -34,9 +33,7 @@ def checkStart(pos1, pos2, workerPos):
         raise SpaceTakenError
     elif pos1 in workerPos or pos2 in workerPos:  # Other player taken the space
         raise SpaceTakenError
-    elif any(0 > val for val in pos1) or any(0 > val for val in pos2):  # Given positions out of bounds
-        raise SelectionError
-    elif any(val > 4 for val in pos1) or any(val > 4 for val in pos2):  # Given positions out of bounds
+    elif outBounds(pos1) or outBounds(pos2):  # Given positions out of bounds
         raise SelectionError
     else:  # Valid position given
         validPos = pos1, pos2
@@ -47,7 +44,7 @@ def checkStart(pos1, pos2, workerPos):
         return validPos
 
 
-def displayBoard(board):
+def displayBoard():
     """Display the board properly in the console"""
     for i in board:
         print("------ ------ ------ ------ ------")

@@ -1,33 +1,31 @@
-from game import newPosition, findBuildLevel, findLevelIndex, getWorkerLoc, getBuildLoc, getMoves, workerMove, \
-    workerBuild
+from game import newPosition, workerMove, workerBuild, findBuildLevel, outBounds, workerLoc, buildLoc, moves
+from ui import displayBoard
 
-posInf = 2000
-negInf = -2000
-moves = getMoves()
+posInf = 1000
+negInf = -1000
 
 
-def possiblePositions(startPos, worker):
+def reach(startPos, workerLevel):
     """Find potential move and build options for a specified worker"""
     move, build = [], []
-    workerLevel = int(worker[3])  # Always same index because the worker is specified
 
     for op in moves:
         pos = newPosition(op, startPos)
 
         # Looking for valid spaces
-        if pos not in getWorkerLoc() and not any(0 > val for val in pos) and not any(val > 4 for val in pos):
+        if pos not in workerLoc and not outBounds(pos):
             build.append(pos)  # Can build anywhere in bounds and without a worker
 
-            if pos not in getBuildLoc() or findBuildLevel(pos) > workerLevel:  # Can move/climb
+            if pos not in buildLoc or findBuildLevel(pos) > workerLevel:  # Can move/climb
                 move.append(pos)
 
     return move, build
 
 
-def playAI(pos, selPlayer):
+def playMiniMax(pos, player):
     """Currently set to run minimax"""
     # Get evaluations for both workers
-    evaluations = [runMiniMax(pos[0], 0, selPlayer), runMiniMax(pos[1], 1, selPlayer)]
+    evaluations = [runMiniMax(pos[0], 0, player), runMiniMax(pos[1], 1, player)]
     worker = 1
 
     if evaluations[0][1][0] > evaluations[1][1][0]:  # Find if worker C or D has the better option and switch if nesc.
@@ -38,19 +36,22 @@ def playAI(pos, selPlayer):
     newPos = evaluations[worker][1][1]
 
     if evaluations[worker][0] == "move":
-        pos[worker] = workerMove(selPlayer, workerPos, worker, newPos)
+        print("Moving to: {}".format(newPos))
+        pos[worker] = workerMove(player, workerPos, worker, newPos)
     else:
+        print("Building on: {}".format(newPos))
         workerBuild(newPos)
-
+    
+    # If moving will return the updated position otherwise pos does not change
     return pos
 
 
-def runMiniMax(currentPos, refIndex, selPlayer):
+def runMiniMax(currentPos, refIndex, player):
     """Calls the minimax algorithm to evaluate options for both workers and then makes the highest ranked move"""
-    moveEval = minimax(currentPos, 2, negInf, posInf, refIndex, True, True, selPlayer)
-    buildEval = minimax(currentPos, 2, negInf, posInf, refIndex, False, True, selPlayer)
+    moveEval = minimax(currentPos, 2, negInf, posInf, refIndex, True, True, player)
+    buildEval = minimax(currentPos, 2, negInf, posInf, refIndex, False, True, player)
 
-    print("Worker: {}, move: {} and build: {}".format(selPlayer[refIndex], moveEval, buildEval))
+    print("Worker: {}, move: {} and build: {}".format(player[refIndex], moveEval, buildEval))
 
     if moveEval[0] > buildEval[0]:
         return "move", moveEval
@@ -58,36 +59,31 @@ def runMiniMax(currentPos, refIndex, selPlayer):
         return "build", buildEval
 
 
-def minimax(pos, depth, alpha, beta, refIndex, movement, maxPlayer, player):
+def minimax(pos, depth, alpha, beta, refIndex, movement, maximising, player):
     """Pos is the position to be evaluated, depth is the number of nodes to test, alpha and beta are to track for
     pruning, activePlayer is the player reference and maxPlayer represents whether aiming to maximise or minimise.
 
     Movement represents working/climbing (0) or building (1)"""
-
-    # If there are no buildings that can be reached need to build
-    # o	Towards friend
-    # o	Away from enemies
-    # •	If next to same level building, build on it
-    # o	If multiple pick one with most potential
+    level = int(player[refIndex][3])
 
     if depth == 0:  # Reached end of search
-        levelIndex = findLevelIndex(player[refIndex])[2]
-        if movement:
-            return movementEvaluation(pos, player[levelIndex]), pos
-        else:
-            return buildEvaluation(pos, player[levelIndex]), pos
 
-    children = possiblePositions(pos, player[refIndex])[movement]
+        if movement:
+            # print(player[refIndex])
+            return movementEvaluation(pos, level), pos
+        else:
+            # print(player[refIndex])
+            return buildEvaluation(pos, level), pos
+
+    children = reach(pos, level)[movement]
     bestPos = []
 
     # Need to maximise
-    if maxPlayer:
+    if maximising:
         maxEval = negInf
         for child in children:
             # Recursive call for min search
             currentEval = minimax(child, depth - 1, alpha, beta, refIndex, movement, False, player)[0]
-            if child in getBuildLoc():
-                currentEval += 50
 
             maxEval = max(maxEval, currentEval)
             alpha = max(alpha, currentEval)
@@ -104,8 +100,6 @@ def minimax(pos, depth, alpha, beta, refIndex, movement, maxPlayer, player):
         for child in children:
             # Recursive call for max search
             currentEval = minimax(child, depth - 1, alpha, beta, refIndex, movement, True, player)[0]
-            if child in getBuildLoc():
-                currentEval += 50
 
             minEval = min(minEval, currentEval)
             beta = min(beta, minEval)
@@ -135,7 +129,7 @@ def movementEvaluation(position, workerLevel):
     for op in moves:
         pos = newPosition(op, position)
 
-        if pos in getBuildLoc():
+        if pos in buildLoc:
             buildLevel = findBuildLevel(pos)
 
             if workerLevel == buildLevel:
@@ -143,47 +137,50 @@ def movementEvaluation(position, workerLevel):
             else:
                 threatScore += 1
                 if workerLevel + 1 == buildLevel:
-                    buildingScore += 100
+                    buildingScore += 80
                 elif workerLevel + 2 == buildLevel:
                     buildingScore -= 50
                 elif workerLevel + 3 == buildLevel:
                     buildingScore -= 20
 
-    # Raise awareness of near win
+    # Near win imminent
     if workerLevel == 2 and threatScore >= 2:
-        threatScore = 500
+        threatScore = 2000
 
-    return levelScore + buildingScore + threatScore
+    # Building score the has the highest weighting
+    return levelScore + 1.5 * buildingScore + threatScore
 
 
 def buildEvaluation(position, workerLevel):
     """For a given possible position evaluate its effectiveness for building"""
-    enemyPos = getWorkerLoc()[:2]
     accessScore, enemyScore, friendScore = 0, 0, 0
 
-    # Evaluate closeness to friend -> If friend can interact with space -> else direction of friend
+    # Find the reachable positions of other workers on the board
+    enemyAReach, enemyBReach = reach(workerLoc[0], workerLevel)[1], reach(workerLoc[1], workerLevel)[1]
+    friendReach = []
+
+    # Find friend location
+    for loc in workerLoc[-2:]:
+        if loc != position:
+            friendReach = reach(loc, workerLevel)[1]
 
     for op in moves:
         pos = newPosition(op, position)
 
-        if pos in enemyPos:
+        if pos in enemyAReach or pos in enemyBReach:  # Negate points if building in reach of enemy
             enemyScore -= 10
+        elif pos in friendReach:  # Points if building in reach of friend worker
+            enemyScore += 10
 
-        elif pos in getBuildLoc():
+        if pos in buildLoc:  # Points if a building reachable
             buildLevel = findBuildLevel(pos)
+
             if buildLevel == workerLevel:
-                accessScore += 50
+                accessScore += 60
             elif buildLevel + 1 == workerLevel:
                 accessScore += 30
             elif buildLevel + 2 == workerLevel:
                 accessScore += 15
 
-    return accessScore + enemyScore + friendScore
-
-
-def beam():
-    return
-
-
-def monte():
-    return
+    # Access score has the highest weighting
+    return 1.5 * accessScore + enemyScore + friendScore

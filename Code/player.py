@@ -1,4 +1,4 @@
-from game import workerLoc, board, workerBuild, workerMove, newPosition
+from game import newPosition, workerBuild, workerMove, workerLoc, board
 from exceptions import SelectionError, BoundsError, SpaceTakenError
 from ui import getStartPos, displayBoard
 
@@ -18,8 +18,7 @@ def playerChoice(startPos, player):
     """Present player with possible options"""
     while True:
         try:
-            displayBoard(board)
-
+            displayBoard()
             worker = input("Select worker, {} or {} ? ".format(player[0], player[1]))
 
             # Player selected invalid character
@@ -27,16 +26,15 @@ def playerChoice(startPos, player):
                 print("Fault 1")
                 raise SelectionError
 
-            active = findWorkerIndex(worker)[0]
-            activeStartPos = startPos[active]  # Start position of selected worker
+            selIndex = findWorkerIndex(worker)[0]  # Get index of the selected worker
+            selPos = startPos[selIndex]  # Start position of selected worker
 
             decision = input("Move or Build? ")
-            newPos = newPosition(input("Direction? "), activeStartPos)
 
             if decision in ["Move", "move"]:
-                startPos[active] = workerMove(player, activeStartPos, active, newPos)
+                startPos[selIndex] = workerMove(player, selPos, selIndex, newPosition(input("Direction? "), selPos))
             elif decision in ["Build", "build"]:
-                workerBuild(newPos)
+                workerBuild(newPosition(input("Direction? "), selPos))
             else:
                 print("Fault 2")
                 raise SelectionError
@@ -49,13 +47,6 @@ def playerChoice(startPos, player):
             print("Space taken, please try again")
         except SelectionError:
             print("Invalid selection, please try again.")
-
-
-def initialSetup():
-    """Initialise board and return starting player values"""
-    one, two = ["| A0 |", "| B0 |", "One", 0, 0], ["| C0 |", "| D0 |", "Two", 0, 0]
-
-    return one, two
 
 
 def findWorkerIndex(worker):
