@@ -14,7 +14,6 @@ buildCode = {
 
 # Generate board
 board = [["|    |" for a in range(5)] for b in range(5)]
-moves = ["W", "A", "S", "D", "WA", "WD", "SA", "SD"]
 
 
 def workerMove(player, startPos, refIndex, newPos):
@@ -28,29 +27,38 @@ def workerMove(player, startPos, refIndex, newPos):
         print("Fault 4")
         raise SpaceTakenError
     else:  # Standard movement
+        pRef, levelIndex = findLevelIndex(player[refIndex])
+
         if newPos in buildLoc:  # Check if space can be climbed and how so
-            climb = workerClimb(newPos, player, refIndex)
+            climb = workerClimb(newPos, player[levelIndex])
 
             if not climb[0]:  # Cannot climb
                 raise BoundsError
 
             elif type(climb[1]) is str:  # Moving between buildings on same level
                 if climb[1] == "desc":
+                    player[levelIndex] -= 1
+                    updateRef(pRef, player, refIndex, levelIndex)
+
                     currentLevel = findBuildLevel(startPos)
                     board[startPos[0]][startPos[1]] = buildCode[currentLevel]
                 else:
                     board[startPos[0]][startPos[1]] = buildCode[int(climb[1])]
 
             else:  # Going up a level
+                player[levelIndex] += 1  # Update worker level
+                updateRef(pRef, player, refIndex, levelIndex)
+
                 if climb[1] > 1:  # If higher than L1 need to replace old building
                     board[startPos[0]][startPos[1]] = buildCode[climb[1] - 1]
-                    # board[startPos[0]][startPos[1]] = ("| L{} |".format(climb[1] - 1))
                 else:  # No building occupied so a blanks space
                     clearPos(startPos)
 
         elif startPos in buildLoc:  # Player descending from L1
-            currentLevel = findBuildLevel(startPos)
-            board[startPos[0]][startPos[1]] = buildCode[currentLevel]
+            board[startPos[0]][startPos[1]] = buildCode[player[levelIndex]]  # Update the board
+            # Update the worker details and icon
+            player[levelIndex] -= 1
+            updateRef(pRef, player, refIndex, levelIndex)
 
         else:
             clearPos(startPos)
@@ -61,24 +69,17 @@ def workerMove(player, startPos, refIndex, newPos):
         return [newPos[0], newPos[1]]
 
 
-def workerClimb(climbPos, player, refIndex):
+def workerClimb(climbPos, playerLevel):
     """Correctly update worker level and detect if climbing, descending or jumping"""
-    pRef, levelIndex = findLevelIndex(player[refIndex])
     buildingLevel = findBuildLevel(climbPos)
 
-    if (buildingLevel - 1) == player[levelIndex]:  # Worker is going to climb up one level
-        player[levelIndex] += 1  # Update worker level
-        updateRef(pRef, player, refIndex, levelIndex)
-
+    if (buildingLevel - 1) == playerLevel:  # Worker is going to climb up one level
         return True, buildingLevel
 
-    elif buildingLevel == player[levelIndex]:  # Worker going across buildings
+    elif buildingLevel == playerLevel:  # Worker going across buildings
         return True, str(buildingLevel)
 
-    elif player[levelIndex] > buildingLevel:  # Worker is descending
-        player[levelIndex] -= 1
-        updateRef(pRef, player, refIndex, levelIndex)
-
+    elif buildingLevel > playerLevel:  # Worker is descending
         return True, "desc"
 
     else:  # Standard movement detection

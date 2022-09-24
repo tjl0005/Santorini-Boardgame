@@ -1,4 +1,4 @@
-from game import newPosition, findBuildLevel, workerLoc, buildDetails, buildLoc, workerMove, workerBuild, moves, board
+from game import newPosition, findBuildLevel, workerLoc, buildDetails, buildLoc, workerMove, workerBuild
 from ui import displayBoard
 
 
@@ -142,7 +142,7 @@ def canReach(startPos, highest, cLevel, movement):
     """Returns a list of all possible positions for a worker"""
     reach, match = [], []
     # Going through all adjacent spaces
-    for op in moves:
+    for op in ["W", "A", "S", "D", "WA", "WD", "SA", "SD"]:
         pos = newPosition(op, startPos)
 
         # Position in bounds, not occupied by worker and not already realised

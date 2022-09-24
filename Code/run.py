@@ -1,8 +1,6 @@
 from logger import startLog
 from minimax import playMiniMax
-from player import setBoard, playerChoice
-
-playerOne, playerTwo = ["| A0 |", "| B0 |", "One", 0, 0], ["| C0 |", "| D0 |", "Two", 0, 0]
+from player import setBoard, playerChoice, playerOne, playerTwo
 
 startLog(False)  # Change to true if wanting to produce logs
 
@@ -19,7 +17,7 @@ if decision in ["2", "Two", "two"]:
 elif decision in ["vs", "versus", "Versus"]:
     while True:
         posA, posB = playMiniMax([posA, posB], playerOne)
-        posC, posD = playMiniMax([posC, posD], playerTwo)
+        posC, posD = playMiniMax([posC, posD], playerTwo,)
 else:
     while True:
         posA, posB = playerChoice([posA, posB], playerOne)
