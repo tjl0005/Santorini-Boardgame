@@ -1,3 +1,4 @@
+from ui import displayBoard
 from logger import startLog
 from minimax import playMiniMax
 from player import setBoard, playerChoice, playerOne, playerTwo
@@ -16,9 +17,12 @@ if decision in ["2", "Two", "two"]:
         posC, posD = playerChoice([posC, posD], playerTwo)
 elif decision in ["vs", "versus", "Versus"]:
     while True:
-        posA, posB = playMiniMax([posA, posB], playerOne)
-        posC, posD = playMiniMax([posC, posD], playerTwo,)
+        posA, posB = playerChoice([posA, posB], playerOne)
+        displayBoard()
+        posC, posD = playMiniMax([posC, posD], "Two")
 else:
     while True:
-        posA, posB = playerChoice([posA, posB], playerOne)
-        posC, posD = playMiniMax([posC, posD], playerTwo)
+        posA, posB = playMiniMax([posA, posB], "One")
+        displayBoard()
+        posC, posD = playMiniMax([posC, posD], "Two")
+        displayBoard()

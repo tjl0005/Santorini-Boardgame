@@ -55,6 +55,10 @@ def getPlayerOne():
     return playerOne
 
 
+def getPlayerTwo():
+    return playerTwo
+
+
 def findWorkerIndex(worker):
     """Find the index of the specified workers"""
     if worker in ["A", "C"]:

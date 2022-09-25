@@ -95,6 +95,9 @@ def workerBuild(buildPos):
         buildLoc.append(buildPos)  # Store building position in taken locations to avoid collisions
 
     else:  # Building higher than l1
+        if maxHeight(buildPos):
+            raise SelectionError
+
         newLevel = buildCode[findBuildLevel(buildPos) + 1]
 
         # Remove old record from build details
@@ -158,7 +161,7 @@ def findLevelIndex(pRef):
 def findBuildLevel(buildPos):
     """Find the level of a specified building and return it as an int"""
     for i in buildDetails:
-        if i[0] == buildPos and i[1] != "| () |":  # Find matching record
+        if i[0] == buildPos and i[1] != "| {} |":  # Find matching record
             return int(i[1].replace("|", "").replace(" ", "").replace("L", ""))  # Standardise reference
 
 
@@ -183,6 +186,11 @@ def removeLevel(ref):
 def clearPos(startPos):
     """Clear a specified position from the board"""
     board[startPos[0]][startPos[1]] = "|    |"  # Clear icon from old position
+
+
+def maxHeight(buildPos):
+    if board[buildPos[0]][buildPos[1]] == "| {} |":
+        return True
 
 
 def outBounds(pos):
