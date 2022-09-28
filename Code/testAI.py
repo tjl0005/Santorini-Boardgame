@@ -1,8 +1,11 @@
-from game import newPosition, findBuildLevel, workerLoc, buildDetails, buildLoc, workerMove, workerBuild
+from game import newPosition, findBuildLevel, workerLoc, buildLoc, workerMove, workerBuild
 from ui import displayBoard
 
+"""NOTE: No longer supported as buildDetails has been made redundant.
+   Also not in a great state, more of a experiment.
+"""
 
-# Not in a great state but helped to understand
+
 def bot(startPos, player, levelIndex, refIndex):
     """Uses factors of the current selected workers position to select a good move, not great, just okay really"""
     print("Starting in AI: {}".format(startPos))

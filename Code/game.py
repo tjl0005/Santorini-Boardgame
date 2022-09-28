@@ -1,8 +1,8 @@
 from exceptions import SelectionError, BoundsError, SpaceTakenError
 
-workerLoc = []
-buildLoc = []
-buildDetails = []
+# Build board
+board = [["|    |" for a in range(5)] for b in range(5)]
+workerLoc, buildLoc = [], []
 
 # Dictionary to get the label for a specified build level
 buildCode = {
@@ -11,9 +11,6 @@ buildCode = {
     3: "| L3 |",
     4: "| {} |"
 }
-
-# Generate board
-board = [["|    |" for a in range(5)] for b in range(5)]
 
 
 def workerMove(player, startPos, refIndex, newPos):
@@ -35,13 +32,11 @@ def workerMove(player, startPos, refIndex, newPos):
             if not climb[0]:  # Cannot climb
                 raise BoundsError
 
-            elif type(climb[1]) is str:  # Moving between buildings on same level
+            elif type(climb[1]) is str:  # Descending or moving between buildings on same level
                 if climb[1] == "desc":
                     player[levelIndex] -= 1
                     updateRef(pRef, player, refIndex, levelIndex)
-
-                    currentLevel = findBuildLevel(startPos)
-                    board[startPos[0]][startPos[1]] = buildCode[currentLevel]
+                    board[startPos[0]][startPos[1]] = buildCode[findBuildLevel(startPos)]
                 else:
                     board[startPos[0]][startPos[1]] = buildCode[int(climb[1])]
 
@@ -54,10 +49,14 @@ def workerMove(player, startPos, refIndex, newPos):
                 else:  # No building occupied so a blanks space
                     clearPos(startPos)
 
-        elif startPos in buildLoc:  # Player descending from L1
+        elif startPos in buildLoc:  # Player descending
             board[startPos[0]][startPos[1]] = buildCode[player[levelIndex]]  # Update the board
-            # Update the worker details and icon
             player[levelIndex] -= 1
+
+            if findBuildLevel(startPos) > 1:
+                player[levelIndex] = 0
+
+            # Update the worker details and icon
             updateRef(pRef, player, refIndex, levelIndex)
 
         else:
@@ -79,7 +78,7 @@ def workerClimb(climbPos, playerLevel):
     elif buildingLevel == playerLevel:  # Worker going across buildings
         return True, str(buildingLevel)
 
-    elif buildingLevel > playerLevel:  # Worker is descending
+    elif 0 < playerLevel > buildingLevel:  # Worker is descending
         return True, "desc"
 
     else:  # Standard movement detection
@@ -100,15 +99,7 @@ def workerBuild(buildPos):
 
         newLevel = buildCode[findBuildLevel(buildPos) + 1]
 
-        # Remove old record from build details
-        for i in range(len(buildDetails)):
-            rec = buildDetails[i]
-            if rec[0] == buildPos:
-                buildDetails.remove(rec)
-                break  # Prevent further searching
-
     board[buildPos[0]][buildPos[1]] = newLevel  # Update the board with new building position
-    buildDetails.append([buildPos, newLevel])  # Add new record to building tracker
 
 
 def newPosition(direction, pos):
@@ -144,7 +135,6 @@ def newPosition(direction, pos):
 
 
 def findLevelIndex(pRef):
-    # Check use of returning pRef
     """Returns the player reference and the indexes for the specified workers reference and level"""
     pRef = stdRef(pRef)
     pRef = removeLevel(pRef)
@@ -160,9 +150,8 @@ def findLevelIndex(pRef):
 
 def findBuildLevel(buildPos):
     """Find the level of a specified building and return it as an int"""
-    for i in buildDetails:
-        if i[0] == buildPos and i[1] != "| {} |":  # Find matching record
-            return int(i[1].replace("|", "").replace(" ", "").replace("L", ""))  # Standardise reference
+    buildRef = board[buildPos[0]][buildPos[1]]
+    return int(buildRef[3])
 
 
 def updateRef(pRef, player, refIndex, levelIndex):
@@ -189,10 +178,12 @@ def clearPos(startPos):
 
 
 def maxHeight(buildPos):
+    """Check if a selected building is at the max height"""
     if board[buildPos[0]][buildPos[1]] == "| {} |":
         return True
 
 
 def outBounds(pos):
+    """Detect if position is out of bounds"""
     if any(0 > val for val in pos) or any(val > 4 for val in pos):
         return True
