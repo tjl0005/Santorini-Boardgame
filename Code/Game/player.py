@@ -1,6 +1,6 @@
-from game import newPosition, workerBuild, workerMove, workerLoc, board
-from exceptions import SelectionError, BoundsError, SpaceTakenError
-from ui import getStartPos, displayBoard
+from Code.Game.playOptions import workerLoc, board, workerMove, newPosition, workerBuild
+from Code.Game.ui import getStartPos, displayBoard
+from Code.Misc.exceptions import SelectionError, BoundsError, SpaceTakenError
 
 playerOne, playerTwo = ["| A0 |", "| B0 |", "One", 0, 0], ["| C0 |", "| D0 |", "Two", 0, 0]
 
@@ -51,14 +51,6 @@ def playerChoice(startPos, player):
             print("Invalid selection, please try again.")
 
 
-def getPlayerOne():
-    return playerOne
-
-
-def getPlayerTwo():
-    return playerTwo
-
-
 def findWorkerIndex(worker):
     """Find the index of the specified workers"""
     if worker in ["A", "C"]:
@@ -67,3 +59,11 @@ def findWorkerIndex(worker):
         return 1, 0
     else:
         raise SelectionError
+
+
+def getPlayerOne():
+    return playerOne
+
+
+def getPlayerTwo():
+    return playerTwo

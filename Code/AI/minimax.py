@@ -1,27 +1,33 @@
-from player import getPlayerOne, getPlayerTwo
-from game import newPosition, workerMove, workerBuild, findBuildLevel, outBounds, workerLoc, buildLoc, maxHeight
+from Code.Game.playOptions import workerMove, newPosition, buildLoc, findBuildLevel, workerBuild, workerLoc, outBounds, maxHeight
+from Code.Game.player import getPlayerOne, getPlayerTwo
+from Code.Game.ui import displayBoard
 
-posInf = 1000
-negInf = -1000
+posInf, negInf = 1000, -1000
 moves = ["W", "A", "S", "D", "WA", "WD", "SA", "SD"]
 playerOne, playerTwo = getPlayerOne(), getPlayerTwo()
+# NOTE: Intending to test importance of central control
 center = [[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3], [3, 1], [3, 2], [3, 3]]
 
 
-def decideMove(startPos, player):
+def mediumAI(startPos, player):
     """Operate the minimax function, find the best decision and act on it"""
+    displayBoard()
     # A/C Evaluations
     xMoveEval = minimax(startPos[0], 3, negInf, posInf, 0, True, True, player)
     xBuildEval = minimax(startPos[0], 3, negInf, posInf, 0, False, True, player)
-    print("Worker {}, Move Score: {}".format(player[0], xMoveEval))
-    print("Worker {}, Build Score: {}".format(player[0], xBuildEval))
+
     # B/D Evaluations
     yMoveEval = minimax(startPos[1], 3, negInf, posInf, 1, True, True, player)
     yBuildEval = minimax(startPos[1], 3, negInf, posInf, 1, False, True, player)
-    print("Worker {}, Move Score: {}".format(player[1], yMoveEval))
-    print("Worker {}, Build Score: {}".format(player[1], yBuildEval))
+
+    # print("Worker {}, Move Score: {}".format(player[0], xMoveEval))
+    # print("Worker {}, Build Score: {}".format(player[0], xBuildEval))
+    # print("Worker {}, Move Score: {}".format(player[1], yMoveEval))
+    # print("Worker {}, Build Score: {}".format(player[1], yBuildEval))
+
     # Decide best evaluation
-    bestMoveEval, bestBuildEval = bestEval(yMoveEval, yBuildEval, xMoveEval, xBuildEval)
+    bestMoveEval = decideWorker(yMoveEval, xMoveEval)
+    bestBuildEval = decideWorker(yBuildEval, xBuildEval)
 
     if bestMoveEval[0][1] == [] and bestBuildEval[0][1] == []:  # Player has no options
         print("\nPlayer {}, has lost!!".format(player[2]))
@@ -35,6 +41,14 @@ def decideMove(startPos, player):
         workerBuild(bestBuildEval[0][1])
 
     return startPos
+
+
+def decideWorker(xEval, yEval):
+    """Given the evaluations for both workers, return those that scored better"""
+    if xEval[0] > yEval[0]:
+        return xEval, 1
+    else:
+        return yEval, 0
 
 
 def reach(startPos, cLevel):
@@ -119,17 +133,12 @@ def movementEvaluation(currentReach, loc, workerLevel, refIndex, player, opponen
 
     finalScore = (playerBuildScore - enemyBuildScore) + (playerHeightScore - enemyHeightScore)
 
-    # Near wins
-    if workerLevel == 2:
-        finalScore = 500
-    elif workerLevel == 3:
-        finalScore = 1000
-
     # Final build and level scores
     return finalScore
 
 
 def moveScore(playerReach, workerLevel):
+    """Return a score based on the buildings accessible within a workers current reach"""
     buildingScore, i = 0, 0
     for workerReach in playerReach:
         level = workerLevel[i]
@@ -148,8 +157,26 @@ def moveScore(playerReach, workerLevel):
                     buildingScore -= 15
                 else:
                     buildingScore -= 10
+            if pos in center:
+                buildingScore += 10
 
     return buildingScore
+
+
+def matchLevel(levels):
+    """Produce score depending upon building/worker level"""
+    score = 0
+    for level in levels:
+        match level:
+            case 1:
+                score += 40
+            case 2:
+                score += 60
+            case 3:
+                score += 1000
+            case _:
+                score += 0
+    return score
 
 
 def buildEvaluation(currentReach, loc, workerLevel, refIndex, player, opponent):
@@ -174,6 +201,7 @@ def buildEvaluation(currentReach, loc, workerLevel, refIndex, player, opponent):
 
 
 def buildScore(playerReach, workerLevel, enemyReach, enemyLoc):
+    """Return a score based on the buildings accessible within a workers current reach"""
     enemyScore, accessScore, i = 0, 0, 0
     for workerReach in playerReach:
         level = workerLevel[i]
@@ -196,6 +224,7 @@ def buildScore(playerReach, workerLevel, enemyReach, enemyLoc):
 
 
 def getLocAndHeight(player, i, update):
+    """Return the locations and heights of a selected player"""
     loc = getPlayerLoc(player)
     height = [int(player[0][3]), int(player[1][3])]
     if update != -1:
@@ -204,43 +233,17 @@ def getLocAndHeight(player, i, update):
     return loc, height
 
 
-def bestEval(yMoveEval, yBuildEval, xMoveEval, xBuildEval):
-    bestMoveEval = xMoveEval, 0
-    bestBuildEval = xBuildEval, 0
-
-    if yMoveEval[0] > xMoveEval[0]:
-        bestMoveEval = yMoveEval, 1
-    if yBuildEval[0] > xBuildEval[0]:
-        bestBuildEval = yBuildEval, 1
-
-    return bestMoveEval, bestBuildEval
-
-
-def matchLevel(levels):
-    """Produce score depending upon building/worker level"""
-    score = 0
-    for level in levels:
-        match level:
-            case 1:
-                score += 40
-            case 2:
-                score += 60
-            case 3:
-                score += 1000
-            case _:
-                score += 0
-    return score
+def posValid(pos):
+    """Check if a position is valid"""
+    if pos not in workerLoc and not outBounds(pos) and not maxHeight(pos):
+        return True
 
 
 def getPlayerLoc(player):
+    """For a given player return its workers locations"""
     playerLoc = [workerLoc[2], workerLoc[3]]
 
     if player == playerOne:
         playerLoc = [workerLoc[0], workerLoc[1]]
 
     return playerLoc
-
-
-def posValid(pos):
-    if pos not in workerLoc and not outBounds(pos) and not maxHeight(pos):
-        return True

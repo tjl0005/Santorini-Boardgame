@@ -1,4 +1,4 @@
-from exceptions import SelectionError, BoundsError, SpaceTakenError
+from Code.Misc.exceptions import BoundsError, SelectionError, SpaceTakenError
 
 # Build board
 board = [["|    |" for a in range(5)] for b in range(5)]

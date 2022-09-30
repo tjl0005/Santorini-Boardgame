@@ -1,5 +1,5 @@
-from exceptions import SelectionError, SpaceTakenError
-from game import board, outBounds
+from Code.Game.playOptions import outBounds, board
+from Code.Misc.exceptions import SpaceTakenError, SelectionError
 
 
 def getStartPos(player, workerPos):
