@@ -1,9 +1,18 @@
-from Code.Game.playOptions import outBounds, board
-from Code.Misc.exceptions import SpaceTakenError, SelectionError
+"""
+Used to output game messages such as the boards current state and use user inputs such as getting the start positions
+of the players
+"""
+from Game.options import outBounds, board
+from Misc.exceptions import SpaceTakenError, SelectionError
 
 
 def getStartPos(player, workerPos):
-    """Uses user inputs to decide on the location for each of the workers and stores the input as coordinates"""
+    """
+    Get the starting positions for a player from the user via inputs from the console
+    :param player: The player to get the start positions for
+    :param workerPos: The current locations of workers
+    :return: A list containing the formatted coordinates e.g. [[0,0], [1,1]]
+    """
     while True:
         try:
             # PLayer selects their starting position, which is split
@@ -28,7 +37,13 @@ def getStartPos(player, workerPos):
 
 
 def checkStart(pos1, pos2, workerPos):
-    """Runs checks on the given start coordinates to ensure they are valid"""
+    """
+    Given two positions and the current worker locations (If any) ensure the positions are valid
+    :param pos1: First workers position
+    :param pos2: Second workers position
+    :param workerPos: The current worker locations
+    :return: The valid positions
+    """
     if pos1 == pos2:  # Current player already taken the space
         raise SpaceTakenError
     elif pos1 in workerPos or pos2 in workerPos:  # Other player taken the space
@@ -45,7 +60,9 @@ def checkStart(pos1, pos2, workerPos):
 
 
 def displayBoard():
-    """Display the board properly in the console"""
+    """
+    Display the board properly in the console
+    """
     for i in board:
         print("------ ------ ------ ------ ------")
         print(" ".join(i))

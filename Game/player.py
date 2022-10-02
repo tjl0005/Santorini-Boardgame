@@ -1,13 +1,20 @@
-from Code.Game.playOptions import workerLoc, board, workerMove, newPosition, workerBuild
-from Code.Game.ui import getStartPos, displayBoard
-from Code.Misc.exceptions import SelectionError, BoundsError, SpaceTakenError
+"""
+This file is mainly used to initialise the players and to get the action selections from the user(s), but also
+contains some essential functions used to improve functionality and accessibility of the player variables
+"""
+from Game.options import workerLoc, board, workerMove, newPosition, workerBuild
+from Game.ui import getStartPos, displayBoard
+from Misc.exceptions import SelectionError, BoundsError, SpaceTakenError
 
 playerOne, playerTwo = ["| A0 |", "| B0 |", "One", 0, 0], ["| C0 |", "| D0 |", "Two", 0, 0]
 
 
 def setBoard(player):
-    """Uses the setStart function twice to get the starting locations of each worker. The returned coordinates are then
-    used to update the board with the locations of the workers and display them to the user."""
+    """
+    Given a player get the starting position from the user and update the board to represent the workers
+    :param player: Player whose workers need to be placed
+    :return: The selected starting positions
+    """
     startPos1, startPos2 = getStartPos(player, workerLoc)
 
     board[startPos1[0]][startPos1[1]] = player[0]
@@ -17,7 +24,12 @@ def setBoard(player):
 
 
 def playerChoice(startPos, player):
-    """Present player with possible options"""
+    """
+    Present the user with their possible options and use their input to call the relevant action functions
+    :param startPos: The starting positions of the selected players workers
+    :param player: The players whose turn it is
+    :return: The updated starting position
+    """
     while True:
         try:
             displayBoard()
@@ -52,7 +64,10 @@ def playerChoice(startPos, player):
 
 
 def findWorkerIndex(worker):
-    """Find the index of the specified workers"""
+    """
+    :param worker: The worker whose reference is unknown
+    :return: The reference index of a selected worker
+    """
     if worker in ["A", "C"]:
         return 0, 1
     elif worker in ["B", "D"]:
@@ -62,8 +77,14 @@ def findWorkerIndex(worker):
 
 
 def getPlayerOne():
+    """
+    :return: The current state of playerOne
+    """
     return playerOne
 
 
 def getPlayerTwo():
+    """
+    :return: The current state of playerTwo
+    """
     return playerTwo

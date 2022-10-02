@@ -1,3 +1,8 @@
+"""
+Contains custom exceptions for clarity within the code
+"""
+
+
 class SpaceTakenError(Exception):
     """Player selecting an occupied space"""
     pass
