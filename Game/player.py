@@ -2,58 +2,68 @@
 This file is mainly used to initialise the players and to get the action selections from the user(s), but also
 contains some essential functions used to improve functionality and accessibility of the player variables
 """
-from Game.options import workerLoc, board, workerMove, newPosition, workerBuild
-from Game.ui import getStartPos, displayBoard
+from Game.actions import workerLoc, board, workerMove, newPosition, workerBuild
+from Game.ui import getStartPos, displayBoard, selectWorker, selectAction
 from Misc.exceptions import SelectionError, BoundsError, SpaceTakenError
 
 playerOne, playerTwo = ["| A0 |", "| B0 |", "One", 0, 0], ["| C0 |", "| D0 |", "Two", 0, 0]
 
 
-def setBoard(player):
+def setBoard(player, userSelect):
     """
     Given a player get the starting position from the user and update the board to represent the workers
-    :param player: Player whose workers need to be placed
+
+    :param userSelect: True, if user selecting starting positions or False if using default start
+    :param player: Player whose workers need to be initialized
     :return: The selected starting positions
     """
-    startPos1, startPos2 = getStartPos(player, workerLoc)
+    if userSelect:
+        posOne, posTwo = getStartPos(player, workerLoc)
 
-    board[startPos1[0]][startPos1[1]] = player[0]
-    board[startPos2[0]][startPos2[1]] = player[1]
+    else:
+        if player == playerOne:
+            posOne, posTwo = [1, 2], [2, 1]
+        else:
+            posOne, posTwo = [2, 3], [3, 2]
 
-    return startPos1, startPos2
+        # Add new positions to workerLoc
+        workerLoc.append(posOne)
+        workerLoc.append(posTwo)
+        # Place workers on board
+        board[posOne[0]][posOne[1]] = player[0]
+        board[posTwo[0]][posTwo[1]] = player[1]
+
+    return posOne, posTwo
 
 
-def playerChoice(startPos, player):
+def playerChoice(pos, player):
     """
     Present the user with their possible options and use their input to call the relevant action functions
-    :param startPos: The starting positions of the selected players workers
+
+    :param pos: The starting positions of the selected players workers
     :param player: The players whose turn it is
     :return: The updated starting position
     """
     while True:
         try:
             displayBoard()
-            worker = input("Select worker, {} or {} ? ".format(player[0], player[1]))
+            worker = selectWorker(player)
+            moving, direction = selectAction()
 
-            # Player selected invalid character
-            if worker not in ["A", "B", "C", "D"]:
-                print("Fault 1")
-                raise SelectionError
+            workerIndex = findWorkerIndex(worker)[0]  # Get index of the selected worker
+            workerPos = pos[workerIndex]  # Start position of selected worker
 
-            selIndex = findWorkerIndex(worker)[0]  # Get index of the selected worker
-            selPos = startPos[selIndex]  # Start position of selected worker
-
-            decision = input("Move or Build? ")
-
-            if decision in ["Move", "move"]:
-                startPos[selIndex] = workerMove(player, selPos, selIndex, newPosition(input("Direction? "), selPos))
-            elif decision in ["Build", "build"]:
-                workerBuild(newPosition(input("Direction? "), selPos))
+            if moving:
+                # Moving means worker position needs to be updated
+                pos[workerIndex] = workerMove(player, workerPos, workerIndex, newPosition(direction, workerPos))
+            elif not moving:
+                # Position does not change when building
+                workerBuild(newPosition(direction, workerPos))
             else:
                 print("Fault 2")
                 raise SelectionError
 
-            return startPos
+            return pos
 
         except BoundsError:
             print("Out of bounds, please try again")
@@ -66,6 +76,7 @@ def playerChoice(startPos, player):
 def findWorkerIndex(worker):
     """
     :param worker: The worker whose reference is unknown
+
     :return: The reference index of a selected worker
     """
     if worker in ["A", "C"]:

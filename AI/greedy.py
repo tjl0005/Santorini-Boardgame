@@ -2,48 +2,13 @@
 This file contains an implementation of a greedy AI with some enhancements to ensure a more complex competition
 Originally implemented to test and tune the minimax AI, it can be used as an easy competitor.
 """
-from Game.options import workerMove, newPosition, buildLoc, findBuildLevel, workerBuild, workerLoc, outBounds, maxHeight
-from Game.ui import displayBoard
-
-
-def easyAI(startPos, player):
-    """
-    Use factors of the current positions surroundings to decide the next best move, uses a greedy approach
-    :param startPos: The initial positions of both workers
-    :param player: The players whose move it is
-    :return: The updated starting positions
-    """
-    highest = getHighest()
-
-    xLevel, yLevel = int(player[0][3]), int(player[1][3])
-    xEvaluation = evaluateOptions(highest, startPos[0], xLevel, 1)
-    yEvaluation = evaluateOptions(highest, startPos[1], yLevel, 0)
-
-    if xEvaluation[1] == 0 and yEvaluation[1] == 0:
-        print("\nPlayer {}, has lost!!".format(player[2]))
-        exit()
-    elif xEvaluation[1] > yEvaluation[1]:
-        if xEvaluation[0]:
-            print("{} moving to {}".format(player[0], xEvaluation[2]))
-            startPos[0] = workerMove(player, startPos[0], 0, xEvaluation[2])
-        else:
-            print("{} building on {}".format(player[0], xEvaluation[2]))
-            workerBuild(xEvaluation[2])
-    else:
-        if yEvaluation[0]:
-            print("{} moving to {}".format(player[1], yEvaluation[2]))
-            startPos[1] = workerMove(player, startPos[1], 1, yEvaluation[2])
-        else:
-            print("{} moving to {}".format(player[1], yEvaluation[2]))
-            workerBuild(yEvaluation[2])
-
-    displayBoard()
-    return startPos
+from Game.actions import newPosition, workerLoc, outBounds, maxHeight, getLevelFromBoard, board
 
 
 def evaluateOptions(highest, startPos, cLevel, friendIndex):
     """
     Given a starting position attempt to find the best position and give it a score
+
     :param highest: A list containing the current highest buildings, if there are no buildings it is an empty list
     :param startPos: The starting position of the current worker
     :param cLevel: The level of the current worker
@@ -84,16 +49,22 @@ def evaluateOptions(highest, startPos, cLevel, friendIndex):
 def getHighest():
     """
     Get the highest buildings currently on the board
+
     :return: A list containing the highest buildings and their level
     """
-    highest = []
+    highest, buildLoc = [], []
+
+    for i in range(5):
+        for j in range(5):
+            if board[i][j] in ["| L1 |", "| L2 |", "| L3 |"]:
+                buildLoc.append([i, j])
 
     if not buildLoc:
         return
 
     for build in buildLoc:
         if not maxHeight(build):  # Not a valid building
-            level = findBuildLevel(build)
+            level = getLevelFromBoard(build)
             if not highest:  # First building to be checked so automatically the highest
                 highest = [build, level]
             else:
@@ -109,6 +80,7 @@ def getHighest():
 def stdRef(ref):
     """
     Take either a worker or building reference and only return the level
+
     :param ref: The reference to the building or worker
     :return: Integer representing the current level
     """
@@ -118,19 +90,20 @@ def stdRef(ref):
 def bestBuild(startPos, reach, friendIndex):
     """
     Find the best position to be built on
+
     :param startPos: The current workers position
     :param reach: The building reach of the worker
     :param friendIndex: The index of the current workers friend
     :return: The best position to build in
     """
-    for build in buildLoc:  # First check if a nearby building can be used
-        if build in reach and not maxHeight(build):
-            return build
+    for pos in reach:
+        if getLevelFromBoard(pos) > 0 and not maxHeight(pos):  # First check if a nearby building can be used
+            return pos
 
     # Attempt to build towards friend worker
     friendPos = friendLoc(friendIndex)
 
-    if friendPos in reach:
+    if friendLoc(friendIndex) in reach:
         return friendPos
     else:
         spaceAround = getSpaceAround(startPos, friendPos, reach)
@@ -143,6 +116,7 @@ def bestBuild(startPos, reach, friendIndex):
 def canBuild(highest, cLevel, startPos, friendIndex):
     """
     Evaluate the current buildings around the worker and return the best position to either climb or build on
+
     :param highest: A list containing the highest buildings
     :param cLevel: The current workers level
     :param startPos: The current workers initial position
@@ -156,14 +130,13 @@ def canBuild(highest, cLevel, startPos, friendIndex):
     # Going to climb or build
     for pos in reachable:
         # Know there is a building to check
-        if pos in buildLoc:
-            bLevel = findBuildLevel(pos)
-            # If worker can climb higher promise that
-            if bLevel > cLevel:  # Building higher so climbing it
+        posLevel = getLevelFromBoard(pos)
+        if posLevel > 0:
+            if posLevel - 1 == cLevel:  # Building can be climbed
                 return False, newPosition(getDirection(startPos, pos), startPos)
 
             # Opportunity for worker to build on top of another building
-            elif bLevel == cLevel:
+            elif posLevel == cLevel:
                 buildSame.append(pos)
 
         # Worker has to build new
@@ -182,6 +155,7 @@ def canBuild(highest, cLevel, startPos, friendIndex):
 def canReach(startPos, highest, cLevel, movement):
     """
     Given a movement type (Climb or build) return a list of all possible positions the given action can be done for
+
     :param startPos: The workers initial position
     :param highest: The current highest buildings on the board
     :param cLevel: The current workers level
@@ -195,8 +169,9 @@ def canReach(startPos, highest, cLevel, movement):
 
         # Position in bounds, not occupied by worker and not already realised
         if pos not in workerLoc and not outBounds(pos) and not maxHeight(pos) and pos not in reach:
-            if pos in buildLoc and movement == "climb":
-                bLevel = findBuildLevel(pos)
+            posLevel = getLevelFromBoard(pos)
+            if posLevel > 0 and movement == "climb":
+                bLevel = getLevelFromBoard(pos)
 
                 if bLevel - 1 == cLevel or bLevel == cLevel or bLevel < cLevel:
                     reach.append(pos)
@@ -205,7 +180,7 @@ def canReach(startPos, highest, cLevel, movement):
                     if val[0] in reach:
                         match.append(val[0])
 
-            elif pos not in buildLoc and movement == "move":
+            elif posLevel == 0 and movement == "move":
                 match.append(pos)
 
             else:  # If wanting to build, can build at any level as long as no worker
@@ -219,6 +194,7 @@ def canReach(startPos, highest, cLevel, movement):
 def getBest(highest, reachable):
     """
     A last resort to find the best position to move to given access to buildings
+
     :param highest: List of the highest buildings on the board
     :param reachable: Current reach of the selected worker
     :return: Either the best position to move to or nothing
@@ -227,8 +203,9 @@ def getBest(highest, reachable):
 
     for pos in reachable:
         posReach = len(canReach(pos, highest, highest[1], "climb"))  # Each reachable buildings counts as a point
+        posLevel = getLevelFromBoard(pos)
 
-        if pos in buildLoc:  # Being able to climb selected pos adds values
+        if posLevel > 0:  # Being able to climb selected pos adds values
             posReach += 1
 
         best.append(posReach)
@@ -240,6 +217,7 @@ def getBest(highest, reachable):
 def getSpaceAround(currentPos, friendPos, reach):
     """
     If a building cannot be reached via WASD directions attempt to use WA, WD, SA an SD
+
     :param currentPos: Current position of the worker
     :param friendPos: Current position of the workers friend
     :param reach: Current move reach of the worker
@@ -273,6 +251,7 @@ def getSpaceAround(currentPos, friendPos, reach):
 def getDirection(startPos, targetPos):
     """
     Given the starting and target positions get the direction required to move to or towards the target
+
     :param startPos: The initial position of the worker
     :param targetPos: The desired position of the worker
     :return: A string representing the relevant direction
@@ -304,6 +283,7 @@ def getDirection(startPos, targetPos):
 def friendLoc(index):
     """
     Give the location of the workers friend
+
     :param index: Current workers index
     :return: The friends location
     """

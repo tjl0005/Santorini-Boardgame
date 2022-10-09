@@ -11,17 +11,23 @@ class Logger(object):
     """
 
     def __init__(self):
-        """Initialise and generate the log name using the current date and time"""
+        """
+        Initialise and generate the log name using the current date and time
+        """
         self.terminal = sys.stdout
         self.log = open("./Logs/{}.txt".format(datetime.now().strftime("%H%M%S")), "w+")
 
     def write(self, output):
-        """Write the output of the console to the log file"""
+        """
+        Write the output of the console to the log file
+        """
         self.terminal.write(output)  # Output to console
         self.log.write("{}\n".format(output))  # Save same output to Logs file
 
     def flush(self):
-        """Need to include"""
+        """
+        Need to include
+        """
         pass
 
 

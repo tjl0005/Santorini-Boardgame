@@ -1,8 +1,3 @@
-Select starting position (e.g. 2,2) for | A0 |: 
-Select starting position (e.g. 1,1) for | B0 |: 
-Select starting position (e.g. 2,2) for | C0 |: 
-Select starting position (e.g. 1,1) for | D0 |: 
-Please choose 2 Players (2) or Vs. 
 Move Count: 1
 
 

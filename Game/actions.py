@@ -3,9 +3,8 @@ This file enables players to perform actions (moving, climbing and building) wit
 """
 from Misc.exceptions import BoundsError, SelectionError, SpaceTakenError
 
-# Build board
-board = [["|    |" for a in range(5)] for b in range(5)]
-workerLoc, buildLoc = [], []
+board = [["|    |" for a in range(5)] for b in range(5)]  # Build the board
+workerLoc = []  # Track the worker locations
 
 # Dictionary to get the label for a specified build level
 buildCode = {
@@ -20,6 +19,7 @@ def workerMove(player, startPos, refIndex, newPos):
     """
     Given a new position move the selected worker to that position. This movement will be validated before the board is
     updated.
+
     :param player: The player to perform the action for
     :param startPos: A list containing the starting positions of players workers in format of [[0, 0], [1, 1]]
     :param refIndex The workers reference index
@@ -35,34 +35,35 @@ def workerMove(player, startPos, refIndex, newPos):
     else:  # Standard movement
         pRef, levelIndex = findLevelIndex(player[refIndex])
 
-        if newPos in buildLoc:  # Check if space can be climbed and how so
-            climb = workerClimb(newPos, player[levelIndex])
+        if getLevelFromBoard(newPos) > 0:  # If space needs to be climbed
+            buildingLevel = getLevelFromBoard(newPos)
+            workerLevel = player[levelIndex]
 
-            if not climb[0]:  # Cannot climb
-                raise BoundsError
+            if 0 < workerLevel > buildingLevel:
+                player[levelIndex] -= 1
+                updateRef(pRef, player, refIndex, levelIndex)
+                board[startPos[0]][startPos[1]] = buildCode[getLevelFromBoard(startPos)]
 
-            elif type(climb[1]) is str:  # Descending or moving between buildings on same level
-                if climb[1] == "desc":
-                    player[levelIndex] -= 1
-                    updateRef(pRef, player, refIndex, levelIndex)
-                    board[startPos[0]][startPos[1]] = buildCode[findBuildLevel(startPos)]
-                else:
-                    board[startPos[0]][startPos[1]] = buildCode[int(climb[1])]
+            elif buildingLevel == workerLevel:  # Traversing same level buildings
+                board[startPos[0]][startPos[1]] = buildCode[int(buildingLevel)]
 
-            else:  # Going up a level
-                player[levelIndex] += 1  # Update worker level
+            elif (buildingLevel - 1) == workerLevel:  # Going up a level
+                # Updating worker level
+                player[levelIndex] += 1
                 updateRef(pRef, player, refIndex, levelIndex)
 
-                if climb[1] > 1:  # If higher than L1 need to replace old building
-                    board[startPos[0]][startPos[1]] = buildCode[climb[1] - 1]
-                else:  # No building occupied so a blanks space
+                if buildingLevel > 1:  # If higher than L1 need to replace old building
+                    board[startPos[0]][startPos[1]] = buildCode[buildingLevel - 1]
+                else:  # No building occupied so old space needs to be cleared
                     clearPos(startPos)
+            else:
+                raise BoundsError
 
-        elif startPos in buildLoc:  # Player descending
+        elif getLevelFromBoard(startPos) > 0:  # Player descending
             board[startPos[0]][startPos[1]] = buildCode[player[levelIndex]]  # Update the board
             player[levelIndex] -= 1
 
-            if findBuildLevel(startPos) > 1:
+            if getLevelFromBoard(startPos) > 1:
                 player[levelIndex] = 0
 
             # Update the worker details and icon
@@ -71,51 +72,28 @@ def workerMove(player, startPos, refIndex, newPos):
         else:
             clearPos(startPos)
 
-        workerLoc[workerLoc.index(startPos)] = newPos
+        workerLoc[workerLoc.index(startPos)] = newPos  # Update worker location in location tracker
         board[newPos[0]][newPos[1]] = player[refIndex]  # Update player position on the board
 
         return [newPos[0], newPos[1]]
 
 
-def workerClimb(climbPos, workerLevel):
-    """
-    Given a new position check if the worker is required to climb the building. If there is no building it is seen as a
-    standard movement, otherwise the worker can either go up, across or down buildings.
-    :param climbPos: The position on the board to be tested
-    :param workerLevel: The current workers level
-    :return:
-    """
-    buildingLevel = findBuildLevel(climbPos)
-
-    if (buildingLevel - 1) == workerLevel:  # Worker is going to climb up one level
-        return True, buildingLevel
-
-    elif buildingLevel == workerLevel:  # Worker going across buildings
-        return True, str(buildingLevel)
-
-    elif 0 < workerLevel > buildingLevel:  # Worker is descending
-        return True, "desc"
-
-    else:  # Standard movement detection
-        return False, ""
-
-
 def workerBuild(buildPos):
     """
     Given a position either register a new building or increase the height of the present building
+
     :param buildPos: The position in which the building is being built
     """
     if buildPos in workerLoc:  # Space is taken by a worker
         raise SelectionError
-    elif buildPos not in buildLoc:  # Space not built on so know it's the first level
+    elif getLevelFromBoard(buildPos) == 0:  # Space not built on so know it's the first level
         newLevel = buildCode[1]
-        buildLoc.append(buildPos)  # Store building position in taken locations to avoid collisions
 
     else:  # Building higher than l1
         if maxHeight(buildPos):
             raise SelectionError
 
-        newLevel = buildCode[findBuildLevel(buildPos) + 1]
+        newLevel = buildCode[getLevelFromBoard(buildPos) + 1]
 
     board[buildPos[0]][buildPos[1]] = newLevel  # Update the board with new building position
 
@@ -123,6 +101,7 @@ def workerBuild(buildPos):
 def newPosition(direction, pos):
     """
     Calculate a new position on the board using the desired direction and the initial position
+
     :param direction: The direction to move in (W, A, S, D, WA, WD, SA and SD)
     :param pos: The initial position
     :return: The new position
@@ -160,6 +139,7 @@ def newPosition(direction, pos):
 def findLevelIndex(pRef):
     """
     Given a player reference return the worker tag and level index, as wll as the standardised reference
+
     :param pRef: The worker reference
     :return: Standardised worker reference and the level index
     """
@@ -167,27 +147,15 @@ def findLevelIndex(pRef):
     pRef = removeLevel(pRef)
 
     if pRef in ["A", "C"]:
-        k, j = 0, 3
+        return pRef, 3
     else:
-        k, j = 1, 4
-
-    # Reference to the worker, worker tag and level index
-    return pRef, j
-
-
-def findBuildLevel(buildPos):
-    """
-    Given a position on the board where a building is present return the level of that building
-    :param buildPos: Position of the building in question
-    :return: The build level
-    """
-    buildRef = board[buildPos[0]][buildPos[1]]
-    return int(buildRef[3])
+        return pRef, 4
 
 
 def updateRef(pRef, player, refIndex, levelIndex):
     """
     Standardise a player reference
+
     :param pRef: The worker reference
     :param player: The current player
     :param refIndex: The workers index reference
@@ -201,7 +169,8 @@ def updateRef(pRef, player, refIndex, levelIndex):
 
 def stdRef(ref):
     """
-    Standardise a worker reference e.g. A
+    Standardise a worker reference
+
     :param ref: The reference to be standardised
     :return: The single character reference
     """
@@ -211,6 +180,7 @@ def stdRef(ref):
 def removeLevel(ref):
     """
     Return the given reference without numbers
+
     :param ref: The worker reference
     :return: Worker reference without a number
     """
@@ -220,6 +190,7 @@ def removeLevel(ref):
 def clearPos(startPos):
     """
     Clear the given position from the board
+
     :param startPos: The position which is now blank
     """
     board[startPos[0]][startPos[1]] = "|    |"  # Clear icon from old position
@@ -228,6 +199,7 @@ def clearPos(startPos):
 def maxHeight(buildPos):
     """
     Check if a building is already at the max height (Dome, {})
+
     :param buildPos: The tested buildings position
     :return: True if the building is at the max height, otherwise nothing
     """
@@ -238,8 +210,23 @@ def maxHeight(buildPos):
 def outBounds(pos):
     """
     Check if a given position is within bounds of the board (0,0 to 4,4)
+
     :param pos: The tested position
     :return: True if within bounds, otherwise nothing
     """
     if any(0 > val for val in pos) or any(val > 4 for val in pos):
         return True
+
+
+def getLevelFromBoard(pos):
+    """
+    Get the level of a given position
+
+    :param pos: Position to retrieve the level of
+    :return: The level of the position
+    """
+    boardValue = board[pos[0]][pos[1]]
+    if boardValue[3].isdigit():
+        return int(boardValue[3])
+    else:
+        return 0
