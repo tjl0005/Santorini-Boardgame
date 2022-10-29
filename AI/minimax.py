@@ -2,53 +2,53 @@
 This file contains the code to perform the minimax algorithm to evaluate all the potential moves of the workers
 of the selected player
 """
-from Game.player import getPlayerOne, getPlayerTwo
-from Game.actions import newPosition, workerLoc, outBounds, maxHeight, getLevelFromBoard
+from Game.player import get_player_one, get_player_two
+from Game.actions import new_position, workerLoc, out_bounds, max_height, get_level_from_board
 
 moves = ["W", "A", "S", "D", "WA", "WD", "SA", "SD"]
-playerOne, playerTwo = getPlayerOne(), getPlayerTwo()
+playerOne, playerTwo = get_player_one(), get_player_two()
 
 
-def decideWorker(xEval, yEval):
+def decide_worker(x_eval, y_eval):
     """
     Given two minimax evaluations return the higher scoring one and the relevant worker
 
-    :param xEval: Either worker A or C's minimax evaluation
-    :param yEval: Either worker B or D's minimax evaluation
+    :param x_eval: Either worker A or C's minimax evaluation
+    :param y_eval: Either worker B or D's minimax evaluation
     :return: A list containing the best static evaluation of those given and an integer representing the relevant worker
     """
-    if xEval[0] > yEval[0]:
-        return xEval, 1
+    if x_eval[0] > y_eval[0]:
+        return x_eval, 1
     else:
-        return yEval, 0
+        return y_eval, 0
 
 
-def reach(startPos, workerLevel):
+def reach(start_pos, worker_level):
     """
     Return the move and build reach of a worker given the workers current position and their level
 
-    :param startPos: The initial coordinates of the worker
-    :param workerLevel: The current level of the worker
+    :param start_pos: The initial coordinates of the worker
+    :param worker_level: The current level of the worker
     :return: Two lists containing the build and move reach
     """
-    moveReach, buildReach = [], []
+    move_reach, build_reach = [], []
     for op in moves:
-        pos = newPosition(op, startPos)
+        pos = new_position(op, start_pos)
         # Position in bounds, not occupied by worker and not already realised
-        if posValid(pos):
-            buildReach.append(pos)
-            posLevel = getLevelFromBoard(pos)
-            if posLevel > 0:
+        if pos_valid(pos):
+            build_reach.append(pos)
+            pos_level = get_level_from_board(pos)
+            if pos_level > 0:
                 # Can climb or descend
-                if workerLevel > posLevel < workerLevel or posLevel in [workerLevel, workerLevel + 1]:
-                    moveReach.append(pos)
+                if worker_level > pos_level < worker_level or pos_level in [worker_level, worker_level + 1]:
+                    move_reach.append(pos)
             else:  # Can move or move
-                moveReach.append(pos)
+                move_reach.append(pos)
 
-    return buildReach, moveReach
+    return build_reach, move_reach
 
 
-def minimax(pos, depth, alpha, beta, refIndex, movement, maximising, player):
+def minimax(pos, depth, alpha, beta, ref_index, movement, maximising, player):
     """
     An implementation of the MiniMax algorithm to evaluate potential positions of a worker
 
@@ -56,86 +56,86 @@ def minimax(pos, depth, alpha, beta, refIndex, movement, maximising, player):
     :param depth: Depth of the tree (Usually 3)
     :param alpha: negInf, used for alpha-beta pruning
     :param beta: maxInf, used for alpha-beta pruning
-    :param refIndex: The relevant workers index within the player variable
+    :param ref_index: The relevant workers index within the player variable
     :param movement: Either evaluating board traversal (True) or building (False)
     :param maximising: True
     :param player: Relevant player variable
     :return: A list containing the static evaluation of the best position and the best found position
     """
-    newLevel = getLevelFromBoard(pos)
+    new_level = get_level_from_board(pos)
 
-    children = reach(pos, int(player[refIndex][3]))[movement]
-    bestMove = []
+    children = reach(pos, int(player[ref_index][3]))[movement]
+    best_move = []
 
     if depth == 0:  # Reached end of search
         if movement:
-            # print("Pos: {} at level: {}".format(pos, newLevel))
-            return movementEvaluation(children, int(player[refIndex][3]), newLevel), pos
+            # print("Pos: {} at level: {}".format(pos, new_level))
+            return movement_evaluation(children, int(player[ref_index][3]), new_level), pos
         else:
             if player == playerTwo:
                 opponent = playerOne
             else:
                 opponent = playerTwo
-            return buildEvaluation(pos, newLevel, opponent), pos
+            return build_evaluation(pos, new_level, opponent), pos
 
     elif maximising:
-        maxEval = -1000
+        max_eval = -1000
         for child in children:
             # Recursive call for min search
-            currentEval = minimax(child, depth - 1, alpha, beta, refIndex, movement, False, player)[0]
-            if currentEval > maxEval:
-                maxEval = currentEval
-                bestMove = child
-            alpha = max(alpha, currentEval)
+            current_eval = minimax(child, depth - 1, alpha, beta, ref_index, movement, False, player)[0]
+            if current_eval > max_eval:
+                max_eval = current_eval
+                best_move = child
+            alpha = max(alpha, current_eval)
 
             if beta <= alpha:
                 break  # Prune remaining children
 
-        return maxEval, bestMove
+        return max_eval, best_move
 
     else:  # Minimising
-        minEval = 1000
+        min_eval = 1000
         for child in children:
             # Recursive call for max search
-            currentEval = minimax(child, depth - 1, alpha, beta, refIndex, movement, True, player)[0]
-            if currentEval < minEval:
-                minEval = currentEval
-                bestMove = child
-            beta = min(beta, currentEval)
+            current_eval = minimax(child, depth - 1, alpha, beta, ref_index, movement, True, player)[0]
+            if current_eval < min_eval:
+                min_eval = current_eval
+                best_move = child
+            beta = min(beta, current_eval)
 
             if beta <= alpha:
                 break
 
-        return minEval, bestMove
+        return min_eval, best_move
 
 
-def movementEvaluation(workerReach, oldLevel, newLevel):
+def movement_evaluation(worker_reach, old_level, new_level):
     """
     Generate a score using the reach of a given position to see the "goodness" of the position overall
 
-    :param workerReach: The reach of the selected position
-    :param oldLevel: The current workers level
-    :param newLevel: The current workers new level
+    :param worker_reach: The reach of the selected position
+    :param old_level: The current workers level
+    :param new_level: The current workers new level
     :return: An integer representing the score based on the reach and current positions height
     """
-    buildingScore = 0
-    levelScore = matchLevel(newLevel) - matchLevel(oldLevel)
+    build_score = 0
+    level_score = match_level(new_level) - match_level(old_level)
 
-    for pos in workerReach:
-        posLevel = getLevelFromBoard(pos)
-        if posLevel > 0:
-            if newLevel + 1 == posLevel:
-                buildingScore += 5
-            elif newLevel + 2 == posLevel:
-                buildingScore -= 5
-            elif newLevel + 3 == posLevel:
-                buildingScore -= 10
+    for pos in worker_reach:
+        pos_level = get_level_from_board(pos)
+        if pos_level > 0:
+            if new_level + 1 == pos_level:
+                build_score += 5
+            elif new_level + 2 == pos_level:
+                build_score -= 5
+            elif new_level + 3 == pos_level:
+                build_score -= 10
 
     # Final build and level scores
-    return buildingScore + levelScore
+    return build_score + level_score
 
 
-def matchLevel(level):
+def match_level(level):
     """
     Return a score based on a workers current level. A list of levels for a players workers must be given.
 
@@ -152,55 +152,55 @@ def matchLevel(level):
             return 0
 
 
-def buildEvaluation(buildPos, workerLevel, opponent):
+def build_evaluation(build_pos, worker_level, opponent):
     """
     Return a score based on a current positions surroundings for building
 
-    :param buildPos: Position to be evaluated
-    :param workerLevel: The current workers level
+    :param build_pos: Position to be evaluated
+    :param worker_level: The current workers level
     :param opponent: The opponent of the current player
     :return: An integer representing the score based on the reach and current positions height
     """
-    enemyLoc = getPlayerLoc(opponent)
-    enemyHeight = [int(opponent[0][3]), int(opponent[1][3])]
-    enemyReach = [reach(enemyLoc[0], enemyHeight[0])[0], reach(enemyLoc[0], enemyHeight[1])[0]]
-    enemyScore, accessScore = 0, 0
+    enemy_loc = get_player_loc(opponent)
+    enemy_height = [int(opponent[0][3]), int(opponent[1][3])]
+    enemy_reach = [reach(enemy_loc[0], enemy_height[0])[0], reach(enemy_loc[0], enemy_height[1])[0]]
+    enemy_score, access_score = 0, 0
 
-    if buildPos in enemyReach[0] or buildPos in enemyReach[1]:  # Negate points if building in reach of enemy
-        enemyScore += 5
+    if build_pos in enemy_reach[0] or build_pos in enemy_reach[1]:  # Negate points if building in reach of enemy
+        enemy_score += 5
 
-    posLevel = getLevelFromBoard(buildPos)
-    if posLevel != 0 and buildPos not in enemyLoc:  # Points if a building reachable
-        if posLevel != 3:
-            if posLevel == workerLevel:
-                accessScore += 20
-            elif posLevel - 1 == workerLevel:
-                accessScore += 10
+    pos_level = get_level_from_board(build_pos)
+    if pos_level != 0 and build_pos not in enemy_loc:  # Points if a building reachable
+        if pos_level != 3:
+            if pos_level == worker_level:
+                access_score += 20
+            elif pos_level - 1 == worker_level:
+                access_score += 10
 
-    if accessScore == 0:
+    if access_score == 0:
         return 1
-    return accessScore - enemyScore
+    return access_score - enemy_score
 
 
-def posValid(pos):
+def pos_valid(pos):
     """
     Check if a position is valid, meaning in bounds, not a dome and not occupied by a worker
 
     :return: True if the given position is valid, if not no return is given
     """
-    if pos not in workerLoc and not outBounds(pos) and not maxHeight(pos):
+    if pos not in workerLoc and not out_bounds(pos) and not max_height(pos):
         return True
 
 
-def getPlayerLoc(player):
+def get_player_loc(player):
     """
     Given a player get the locations of their workers
 
     :return: A list containing the locations of the workers
     """
-    playerLoc = [workerLoc[2], workerLoc[3]]
+    player_loc = [workerLoc[2], workerLoc[3]]
 
     if player == playerOne:
-        playerLoc = [workerLoc[0], workerLoc[1]]
+        player_loc = [workerLoc[0], workerLoc[1]]
 
-    return playerLoc
+    return player_loc

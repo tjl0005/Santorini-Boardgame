@@ -2,28 +2,28 @@
 Used to output game messages such as the boards current state and use user inputs such as getting the start positions
 of the players
 """
-from Game.actions import outBounds, board
+from Game.actions import out_bounds, board
 from Misc.exceptions import SpaceTakenError, SelectionError
 
 
-def getStartPos(player, workerLoc):
+def get_start_pos(player, worker_loc):
     """
     Get the starting positions for a player from the user
 
     :param player: The player to get start positions for
-    :param workerLoc: Record of workers locations
+    :param worker_loc: Record of workers locations
     :return: A list containing the formatted coordinates e.g. [[0,0], [1,1]]
     """
     while True:
         try:
             # PLayer selects their starting position, which is split
-            posOne = input("Select starting position (e.g. 2,2) for {}: ".format(player[0])).split(",")
-            posOne = [int(posOne[0]), int(posOne[1])]
+            pos_one = input("Select starting position (e.g. 2,2) for {}: ".format(player[0])).split(",")
+            pos_one = [int(pos_one[0]), int(pos_one[1])]
 
-            posTwo = input("Select starting position (e.g. 1,1) for {}: ".format(player[1])).split(",")
-            posTwo = [int(posTwo[0]), int(posTwo[1])]
+            pos_two = input("Select starting position (e.g. 1,1) for {}: ".format(player[1])).split(",")
+            pos_two = [int(pos_two[0]), int(pos_two[1])]
 
-            check = checkStart(posOne, posTwo, workerLoc)
+            check = check_start(pos_one, pos_two, worker_loc)
 
             return check
 
@@ -37,31 +37,31 @@ def getStartPos(player, workerLoc):
             print("Please enter a valid position")
 
 
-def checkStart(posOne, posTwo, workerLoc):
+def check_start(pos_one, pos_two, worker_loc):
     """
     Given two positions and the current worker locations (If any) ensure the positions are valid
 
-    :param posOne: First workers position
-    :param posTwo: Second workers position
-    :param workerLoc: The current worker locations
+    :param pos_one: First workers position
+    :param pos_two: Second workers position
+    :param worker_loc: The current worker locations
     :return: The valid positions
     """
-    if posOne == posTwo:  # Current player already taken the space
+    if pos_one == pos_two:  # Current player already taken the space
         raise SpaceTakenError
-    elif posOne in workerLoc or posTwo in workerLoc:  # Other player taken the space
+    elif pos_one in worker_loc or pos_two in worker_loc:  # Other player taken the space
         raise SpaceTakenError
-    elif outBounds(posOne) or outBounds(posTwo):  # Given positions out of bounds
+    elif out_bounds(pos_one) or out_bounds(pos_two):  # Given positions out of bounds
         raise SelectionError
     else:  # Valid position given
-        validPos = posOne, posTwo
+        valid_pos = pos_one, pos_two
         # Track all starting positions
-        workerLoc.append(validPos[0])
-        workerLoc.append(validPos[1])
+        worker_loc.append(valid_pos[0])
+        worker_loc.append(valid_pos[1])
 
-        return validPos
+        return valid_pos
 
 
-def displayBoard():
+def display_board():
     """
     Display the board properly in the console
     """
@@ -72,7 +72,7 @@ def displayBoard():
     print("------ ------ ------ ------ ------")
 
 
-def moveCounter(count):
+def move_counter(count):
     """
     Increment the counter tracking the number of moves taken and print the new amount
 
@@ -84,7 +84,7 @@ def moveCounter(count):
     return count
 
 
-def selectWorker(player):
+def select_worker(player):
     """
     Get user to select a worker
 
@@ -100,7 +100,7 @@ def selectWorker(player):
         return worker
 
 
-def selectAction():
+def select_action():
     """
     Get worker action from current user
 
@@ -118,7 +118,7 @@ def selectAction():
         raise SelectionError
 
 
-def userDecideStartPos():
+def user_decide_start_pos():
     """
     Ask user if they want to select the starting positions
 

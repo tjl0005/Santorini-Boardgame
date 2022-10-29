@@ -2,41 +2,41 @@
 This file is mainly used to initialise the players and to get the action selections from the user(s), but also
 contains some essential functions used to improve functionality and accessibility of the player variables
 """
-from Game.actions import workerLoc, board, workerMove, newPosition, workerBuild
-from Game.ui import getStartPos, displayBoard, selectWorker, selectAction
+from Game.actions import workerLoc, board, worker_move, new_position, worker_build
+from Game.ui import get_start_pos, display_board, select_worker, select_action
 from Misc.exceptions import SelectionError, BoundsError, SpaceTakenError
 
 playerOne, playerTwo = ["| A0 |", "| B0 |", "One", 0, 0], ["| C0 |", "| D0 |", "Two", 0, 0]
 
 
-def setBoard(player, userSelect):
+def set_board(player, user_select):
     """
     Given a player get the starting position from the user and update the board to represent the workers
 
-    :param userSelect: True, if user selecting starting positions or False if using default start
+    :param user_select: True, if user selecting starting positions or False if using default start
     :param player: Player whose workers need to be initialized
     :return: The selected starting positions
     """
-    if userSelect:
-        posOne, posTwo = getStartPos(player, workerLoc)
+    if user_select:
+        pos_one, pos_two = get_start_pos(player, workerLoc)
 
     else:
         if player == playerOne:
-            posOne, posTwo = [1, 2], [2, 1]
+            pos_one, pos_two = [1, 2], [2, 1]
         else:
-            posOne, posTwo = [2, 3], [3, 2]
+            pos_one, pos_two = [2, 3], [3, 2]
 
         # Add new positions to workerLoc
-        workerLoc.append(posOne)
-        workerLoc.append(posTwo)
+        workerLoc.append(pos_one)
+        workerLoc.append(pos_two)
         # Place workers on board
-        board[posOne[0]][posOne[1]] = player[0]
-        board[posTwo[0]][posTwo[1]] = player[1]
+        board[pos_one[0]][pos_one[1]] = player[0]
+        board[pos_two[0]][pos_two[1]] = player[1]
 
-    return posOne, posTwo
+    return pos_one, pos_two
 
 
-def playerChoice(pos, player):
+def player_choice(pos, player):
     """
     Present the user with their possible options and use their input to call the relevant action functions
 
@@ -46,19 +46,19 @@ def playerChoice(pos, player):
     """
     while True:
         try:
-            displayBoard()
-            worker = selectWorker(player)
-            moving, direction = selectAction()
+            display_board()
+            worker = select_worker(player)
+            moving, direction = select_action()
 
-            workerIndex = findWorkerIndex(worker)[0]  # Get index of the selected worker
-            workerPos = pos[workerIndex]  # Start position of selected worker
+            worker_index = find_worker_index(worker)[0]  # Get index of the selected worker
+            worker_pos = pos[worker_index]  # Start position of selected worker
 
             if moving:
                 # Moving means worker position needs to be updated
-                pos[workerIndex] = workerMove(player, workerPos, workerIndex, newPosition(direction, workerPos))
+                pos[worker_index] = worker_move(player, worker_pos, worker_index, new_position(direction, worker_pos))
             elif not moving:
                 # Position does not change when building
-                workerBuild(newPosition(direction, workerPos))
+                worker_build(new_position(direction, worker_pos))
             else:
                 print("Fault 2")
                 raise SelectionError
@@ -73,7 +73,7 @@ def playerChoice(pos, player):
             print("Invalid selection, please try again.")
 
 
-def findWorkerIndex(worker):
+def find_worker_index(worker):
     """
     :param worker: The worker whose reference is unknown
 
@@ -87,14 +87,14 @@ def findWorkerIndex(worker):
         raise SelectionError
 
 
-def getPlayerOne():
+def get_player_one():
     """
     :return: The current state of playerOne
     """
     return playerOne
 
 
-def getPlayerTwo():
+def get_player_two():
     """
     :return: The current state of playerTwo
     """

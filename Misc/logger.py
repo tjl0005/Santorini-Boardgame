@@ -31,7 +31,7 @@ class Logger(object):
         pass
 
 
-def startLog():
+def start_log():
     """
     Call to begin a log
     """
