@@ -1,9 +1,15 @@
 import pygame
 
-FPS = 60
+FPS = 20
 ROWS, COLS = 5, 5
 HEIGHT, WIDTH = 600, 600
 SQUARE_SIZE = WIDTH // COLS
+button_size_one = (100, 40)
+button_size_two = (200, 40)
+
+# Player References
+player_one = "One"
+player_two = "Two"
 
 # Board/Piece colours
 BROWN = (184, 134, 74)

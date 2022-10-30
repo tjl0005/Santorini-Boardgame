@@ -1,9 +1,7 @@
 import pygame
-
-from santorini.button import Button
-from santorini.board import Board
-from santorini.worker import Worker
-from santorini.constants import SQUARE_SIZE, move_icon, build_icon
+from .board import Board
+from .button import Button
+from .constants import SQUARE_SIZE, move_icon, build_icon, button_size_one, player_one, player_two
 
 
 def calc_pos(col, row):
@@ -21,28 +19,18 @@ def get_row_col_from_mouse(pos):
 
 
 class Game:
-    def __init__(self, win):
+    def __init__(self, win, game_type):
+        self.game_type = game_type
         self.mode = "move"
+        self.mode_button = Button(550, 20, "Mode", button_size_one)
+        self.exit_button = Button(50, 20, "Exit", button_size_one)
         self.selected = None
-        self.turn = "One"
+        self.turn = player_one
         self.valid_moves = {}
         self.valid_builds = {}
-        self.mode_button = Button(550, 20, "Mode")
         self.board = Board()
         self.is_over = False
         self.win = win
-
-    def update(self, mode):
-        self.board.draw(self.win)
-        if self.mode == "move":
-            self.draw_valid_moves(self.valid_moves, move_icon)
-        else:
-            self.draw_valid_moves(self.valid_builds, build_icon)
-
-        self.mode_button.update(self.win)
-        self.mode_button.change_colour(pygame.mouse.get_pos())
-        self.mode = mode
-        pygame.display.update()
 
     def select(self, row, col):
         if self.selected:
@@ -58,6 +46,12 @@ class Game:
             return True
 
         return False
+
+    def draw_valid_moves(self, moves, icon):
+        for move in moves:
+            row, col = move
+            x, y = calc_pos(col, row)
+            self.win.blit(icon, (x, y))
 
     def _move(self, row, col):
         if self.selected:
@@ -78,17 +72,28 @@ class Game:
 
         return True
 
-    def draw_valid_moves(self, moves, icon):
-        for move in moves:
-            row, col = move
-            x, y = calc_pos(col, row)
-            self.win.blit(icon, (x, y))
-
     def change_turn(self):
         # Opposite of current
         self.valid_moves = {}
         self.valid_builds = {}
-        if self.turn == "One":
-            self.turn = "Two"
+        if self.turn == player_one:
+            self.turn = player_two
         else:
-            self.turn = "One"
+            self.turn = player_one
+
+    def update(self, mode):
+        self.board.draw(self.win)
+        self.mode = mode
+
+        if self.mode == "move":
+            self.draw_valid_moves(self.valid_moves, move_icon)
+        else:
+            self.draw_valid_moves(self.valid_builds, build_icon)
+
+        pos = pygame.mouse.get_pos()
+
+        self.exit_button.update(self.win)
+        self.exit_button.change_colour(pos)
+        self.mode_button.update(self.win)
+        self.mode_button.change_colour(pos)
+        pygame.display.update()
