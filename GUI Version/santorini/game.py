@@ -1,6 +1,6 @@
 import pygame
 from .board import Board
-from .button import Button
+from .components.button import Button
 from .constants import SQUARE_SIZE, move_icon, build_icon, button_size_one, player_one, player_two
 
 
@@ -9,13 +9,6 @@ def calc_pos(col, row):
     y = SQUARE_SIZE * row + SQUARE_SIZE // 2 - 25
 
     return x, y
-
-
-def get_row_col_from_mouse(pos):
-    x, y = pos
-    row = y // SQUARE_SIZE
-    col = x // SQUARE_SIZE
-    return row, col
 
 
 class Game:

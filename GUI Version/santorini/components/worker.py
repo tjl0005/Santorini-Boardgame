@@ -1,4 +1,4 @@
-from .constants import SQUARE_SIZE, red_worker, yellow_worker, player_one
+from ..constants import SQUARE_SIZE, red_worker, yellow_worker, player_one
 
 
 class Worker:
@@ -27,6 +27,3 @@ class Worker:
             win.blit(red_worker, (self.x, self.y))
         else:
             win.blit(yellow_worker, (self.x, self.y))
-
-    def get_height(self):
-        return self.height

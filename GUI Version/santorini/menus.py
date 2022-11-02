@@ -1,6 +1,6 @@
 import pygame
 
-from .button import Button
+from .components.button import Button
 from .constants import button_size_one, button_size_two
 
 
@@ -104,5 +104,7 @@ class Options:
             self.game_type = "two"
         elif game_type == "minimax":
             self.game_type = "minimax"
+        elif game_type == "greedy":
+            self.game_type = "greedy"
 
         self.option_button = Button(300, 250, self.game_type, button_size_two)

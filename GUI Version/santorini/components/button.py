@@ -1,6 +1,6 @@
 import pygame
 
-from .constants import button_icon
+from ..constants import button_icon
 
 pygame.init()
 font = pygame.font.SysFont("calibre", 30)
@@ -50,6 +50,8 @@ class Button:
             if option_type == "start":
                 return True
             elif option_type == "minimax":
+                return "greedy"
+            elif option_type == "greedy":
                 return "two"
             else:
                 return "minimax"
