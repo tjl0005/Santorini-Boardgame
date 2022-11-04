@@ -2,13 +2,13 @@ from ..constants import SQUARE_SIZE, red_worker, yellow_worker, player_one
 
 
 class Worker:
-    def __init__(self, row, col, player, index):
+    def __init__(self, pos, player, index):
         self.player = player
         self.index = index
         self.on_building = False
         self.height = 0
-        self.row = row
-        self.col = col
+        self.row = pos[0]
+        self.col = pos[1]
         self.x = 0
         self.y = 0
         self.calc_pos()

@@ -1,7 +1,9 @@
 import pygame
 
 from .components.button import Button
-from .constants import button_size_one, button_size_two
+from .constants import button_size_one, button_size_two, background, cloud, squirk, BLUE
+
+font = pygame.font.Font(squirk, 48)
 
 
 class Start:
@@ -13,98 +15,91 @@ class Start:
         self.exit_button = Button(300, 300, "Exit", button_size_one)
 
     def title(self):
-        self.win.fill(self.colour)
-        font = pygame.font.SysFont("calibre", 60)
-        text = font.render('Santorini', True, (0, 255, 0))
+        text = font.render('Santorini', True, BLUE)
         text_rect = text.get_rect()
-        text_rect.center = (300, 100)
+        text_rect.center = (300, 110)
 
+        self.win.blit(cloud, (130, 50))
         self.win.blit(text, text_rect)
 
-    def buttons(self):
-        pos = pygame.mouse.get_pos()
-        self.start_button.update(self.win)
-        self.start_button.change_colour(pos)
-        self.options_button.update(self.win)
-        self.options_button.change_colour(pos)
-        self.exit_button.update(self.win)
-        self.exit_button.change_colour(pos)
-
-    def get_state(self, state, pos):
-        state = self.start_button.check_display(pos, state)
-        state = self.options_button.check_display(pos, state)
-        state = self.exit_button.check_display(pos, state)
-
-        return state
-
-    # noinspection DuplicatedCode
-    def update(self, pos):
+    def update(self, event):
+        self.win.blit(background, (0, 0))
         self.title()
-        self.buttons()
+        self.start_button.update()
+        self.options_button.update()
+        self.exit_button.update()
 
-        self.start_button.update(self.win)
-        self.start_button.change_colour(pos)
-        self.options_button.update(self.win)
-        self.options_button.change_colour(pos)
-        self.exit_button.update(self.win)
-        self.exit_button.change_colour(pos)
+        self.start_button.draw(self.win)
+        self.options_button.draw(self.win)
+        self.exit_button.draw(self.win)
+
+        start_clicked = self.start_button.handle_event(event, "display")
+        options_clicked = self.options_button.handle_event(event, "display")
+        self.exit_button.handle_event(event, "display")
+
+        if start_clicked:
+            self.start_button.hovered = False
+            return "play"
+        elif options_clicked:
+            self.options_button.hovered = False
+            return "options"
 
         pygame.display.update()
 
 
-# noinspection DuplicatedCode
 class Options:
     def __init__(self, win):
         self.colour = (255, 255, 255)
         self.win = win
         self.state = "options"
-        self.game_type = "two"
-        self.positions = "Default Positions"
-        self.return_button = Button(300, 200, "Back to start", button_size_two)
+        self.game_type = "Two Player"
+        self.start_select = "Default Positions"
+        self.return_button = Button(300, 200, "back", button_size_two)
         self.option_button = Button(300, 250, self.game_type, button_size_two)
-        self.position_button = Button(300, 300, self.positions, button_size_two)
+        self.select_button = Button(300, 300, self.start_select, button_size_two)
 
     def title(self):
-        self.win.fill(self.colour)
-        font = pygame.font.SysFont("calibre", 60)
-        text = font.render('Option Menu', True, (0, 255, 0))
+        text = font.render('Options', True, BLUE)
         text_rect = text.get_rect()
-        text_rect.center = (300, 100)
+        text_rect.center = (300, 110)
 
+        self.win.blit(cloud, (130, 50))
         self.win.blit(text, text_rect)
 
-    def buttons(self, pos):
-        self.return_button.change_colour(pos)
-        self.option_button.update(self.win)
-        self.option_button.change_colour(pos)
-        self.position_button.update(self.win)
-        self.position_button.change_colour(pos)
-
-    def update(self, pos):
+    def update(self, event):
+        self.win.blit(background, (0, 0))
         self.title()
 
-        self.return_button.update(self.win)
-        self.return_button.change_colour(pos)
-        self.option_button.update(self.win)
-        self.option_button.change_colour(pos)
-        self.position_button.update(self.win)
-        self.position_button.change_colour(pos)
-        pygame.display.update()
+        self.return_button.draw(self.win)
+        self.option_button.draw(self.win)
+        self.select_button.draw(self.win)
 
-    def get_updates(self, pos):
-        start_state = self.return_button.check_options(pos, "start")
-        game_type = self.option_button.check_options(pos, self.game_type)
+        self.return_button.update()
+        self.option_button.update()
+        self.select_button.update()
 
-        if start_state:
+        if self.return_button.handle_event(event, "options"):
             self.state = "start"
-        elif not start_state:
+            self.return_button.hovered = False
+        else:
             self.state = "options"
 
-        if game_type == "two":
-            self.game_type = "two"
-        elif game_type == "minimax":
-            self.game_type = "minimax"
-        elif game_type == "greedy":
-            self.game_type = "greedy"
+        game_type = self.option_button.handle_event(event, "options")
+        selection_type = self.select_button.handle_event(event, "options")
 
-        self.option_button = Button(300, 250, self.game_type, button_size_two)
+        if game_type == "Two Player":
+            self.game_type = "Two Player"
+        elif game_type == "Minimax":
+            self.game_type = "Minimax"
+        elif game_type == "Greedy":
+            self.game_type = "Greedy"
+
+        if selection_type == "Default Positions":
+            self.start_select = "Default Positions"
+        elif selection_type == "User Positions":
+            self.start_select = "User Positions"
+
+        self.option_button.update_text(self.game_type)
+        self.select_button.update_text(self.start_select)
+
+        pygame.display.update()

@@ -1,19 +1,30 @@
 import pygame
 
-FPS = 20
+FPS = 60
 ROWS, COLS = 5, 5
 HEIGHT, WIDTH = 600, 600
 SQUARE_SIZE = WIDTH // COLS
 button_size_one = (100, 40)
 button_size_two = (200, 40)
+default_positions = [[1, 2], [2, 1], [2, 3], [3, 2]]
+
+# Board/Piece colours
+BLUE = (21, 176, 231)
+light_green = (160, 164, 103)
+green = (100, 164, 103)
+dark_green = (117, 143, 78)
 
 # Player References
 player_one = "One"
 player_two = "Two"
 
-# Board/Piece colours
-BROWN = (184, 134, 74)
-YELLOW = (227, 193, 111)
+# Font
+squirk = "assets/Squirk.ttf"
+
+# Menu Items
+icon = pygame.image.load("assets/icon.png")
+cloud = pygame.transform.scale(pygame.image.load('assets/cloud.png'), (350, 100))
+background = pygame.transform.scale(pygame.image.load('assets/background.png'), (600, 600))
 
 # Worker placeholder
 red_worker = pygame.transform.scale(pygame.image.load('assets/red.png'), (100, 100))

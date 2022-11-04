@@ -1,16 +1,17 @@
 import pygame
 
-from .constants import SQUARE_SIZE, ROWS, COLS, BROWN, YELLOW, player_one, player_two
-from .components.building import Building
-from .components.worker import Worker
+from ..constants import SQUARE_SIZE, ROWS, COLS, player_one, player_two, dark_green, light_green, green
+from ..components.building import Building
+from ..components.worker import Worker
 
 
 class Board:
-    def __init__(self):
+    def __init__(self, starting_positions):
         # Will update with user selected starting positions
         self.occupied = [(1, 2), (2, 1), (2, 3), (3, 2)]
         self.player_one_heights = [0, 0]
         self.player_two_heights = [0, 0]
+        self.starting_positions = starting_positions
         self.buildings = []
         self.board = []
         self.create_board()
@@ -21,23 +22,29 @@ class Board:
             for col in range(COLS):
                 self.board[row].append(0)
 
-        self.board[1][2] = (Worker(1, 2, player_one, 0))
-        self.board[2][1] = (Worker(2, 1, player_one, 1))
-        self.board[2][3] = (Worker(2, 3, player_two, 0))
-        self.board[3][2] = (Worker(3, 2, player_two, 1))
+        worker_one = self.starting_positions[0]
+        worker_two = self.starting_positions[1]
+        worker_three = self.starting_positions[2]
+        worker_four = self.starting_positions[3]
+
+        self.board[worker_one[0]][worker_one[1]] = (Worker(worker_one, player_one, 0))
+        self.board[worker_two[0]][worker_two[1]] = (Worker(worker_two, player_one, 1))
+        self.board[worker_three[0]][worker_three[1]] = (Worker(worker_three, player_two, 0))
+        self.board[worker_four[0]][worker_four[1]] = (Worker(worker_four, player_two, 1))
 
     def draw(self, win):
-        win.fill(BROWN)
+        win.fill(light_green)
 
         for row in range(ROWS):
             # Draw background
             for col in range(row % 2, COLS, 2):
-                pygame.draw.rect(win, YELLOW, (row * SQUARE_SIZE, col * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+                pygame.draw.rect(win, dark_green, (row * SQUARE_SIZE, col * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
         # Currently need separate loops due to background squares being drawn over workers
         for row in range(ROWS):
             # Draw workers
             for col in range(COLS):
+                pygame.draw.rect(win, green, (row * SQUARE_SIZE, col * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE), 1)
                 item = self.board[row][col]  # Refers to either a worker or a building
                 if item != 0:
                     item.draw(win)

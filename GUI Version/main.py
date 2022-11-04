@@ -4,7 +4,7 @@ from santorini.game import Game
 from santorini.menus import Start, Options
 from santorini.algorithms.greedy import greedy
 from santorini.algorithms.minimax import minimax
-from santorini.constants import HEIGHT, WIDTH, FPS, player_two, SQUARE_SIZE
+from santorini.constants import HEIGHT, WIDTH, FPS, SQUARE_SIZE, player_two, icon, default_positions
 
 
 class Santorini:
@@ -13,47 +13,42 @@ class Santorini:
         self.win = pygame.display.set_mode((WIDTH, HEIGHT))
         self.clock = pygame.time.Clock()
         self.run = True
-        self.game_mode = "move"
         self.state = "start"
-        self.game = Game(self.win, "minimax")
+        self.game = None
+        self.starting_positions = default_positions
         self.start = Start(self.win)
         self.options = Options(self.win)
-        self.score = 0
 
     def start(self):
+        pygame.display.set_icon(icon)
+        pygame.display.set_caption('Santorini')
+
         while self.run:
             self.clock.tick(FPS)
 
             for event in pygame.event.get():
-                if self.game.is_over:
+                if self.state == "start":
+                    self.game = Game(self.win, self.starting_positions)
+                    new_state = self.start.update(event)
+                    if new_state:
+                        self.state = new_state
+                    if self.options.start_select == "User Positions":
+                        # Currently only switches starting positions of players -> Will update to be user selected
+                        self.starting_positions = [[2, 3], [3, 2], [1, 2], [2, 1]]
+                    else:
+                        self.starting_positions = default_positions
+
+                if self.game.is_over or event.type == pygame.QUIT:
                     print("Player {} has won!".format(self.game.turn))
                     self.run = False
 
-                elif event.type == pygame.QUIT:
-                    self.run = False
-
-                elif self.state == "start":
-                    pygame.display.set_caption('Start')
-                    pos = pygame.mouse.get_pos()
-                    self.start.update(pos)
-
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        self.state = self.start.get_state(self.state, pos)
-
                 elif self.state == "options":
-                    pygame.display.set_caption('Options')
-                    pos = pygame.mouse.get_pos()
-                    self.options.update(pos)
-
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        self.options.get_updates(pos)
-                        self.state = self.options.state
-                        self.game_mode = self.options.game_type
+                    self.options.update(event)
+                    self.state = self.options.state
 
                 elif self.state == "play":
-                    pygame.display.set_caption('Game')
-                    if self.game.turn == player_two and self.options.game_type != "two":
-                        if self.options.game_type == "minimax":
+                    if self.game.turn == player_two and self.options.game_type != "Two Player":
+                        if self.options.game_type == "Minimax":
                             move_score, move_board = minimax(self.game.board, 3, float('-inf'), float('inf'), True,
                                                              False, self.game)
                             build_score, build_board = minimax(self.game.board, 3, float('-inf'), float('inf'), True,
@@ -63,7 +58,6 @@ class Santorini:
                                 print("Final Score: {}".format(move_score))
                                 print("Best positions: {}".format(move_board.occupied))
                                 self.game.board = move_board
-                                self.game.change_turn()
                             else:
                                 print("\nBuilding")
                                 print("Final Score: {}".format(build_score))
@@ -72,23 +66,19 @@ class Santorini:
 
                         else:
                             # Currently has no win confirmation
-                            self.game.board = greedy(self.game, player_two)
+                            self.game.board = greedy(self.game.board, player_two)
 
                         self.game.change_turn()
 
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         pos = pygame.mouse.get_pos()
                         row, col = get_row_col_from_mouse(pos)
-                        self.game.mode = self.game.mode_button.check_mode(pos, self.game.mode)
-
-                        # A very ugly solution but hopefully only temporary
-                        if not self.game.exit_button.check_mode(pos, "start"):
-                            self.state = "start"  # Redirect to start menu
-                            self.game = Game(self.win, self.game.mode)  # Reset self.game.instance
-
                         self.game.select(row, col)
 
-                    self.game.update(self.game.mode)
+                    self.game.update(event)
+
+                    if self.game.state == "start":
+                        self.state = "start"  # Redirect to start menu
 
 
 def get_row_col_from_mouse(pos):

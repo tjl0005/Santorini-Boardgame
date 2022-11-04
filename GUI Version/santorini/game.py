@@ -1,5 +1,5 @@
 import pygame
-from .board import Board
+from .components.board import Board
 from .components.button import Button
 from .constants import SQUARE_SIZE, move_icon, build_icon, button_size_one, player_one, player_two
 
@@ -12,17 +12,17 @@ def calc_pos(col, row):
 
 
 class Game:
-    def __init__(self, win, game_type):
-        self.game_type = game_type
-        self.mode = "move"
-        self.mode_button = Button(550, 20, "Mode", button_size_one)
-        self.exit_button = Button(50, 20, "Exit", button_size_one)
+    def __init__(self, win, starting_positions):
+        self.mode = "moving"
+        self.mode_button = Button(550, 20, self.mode, button_size_one)
+        self.exit_button = Button(50, 20, "exit", button_size_one)
         self.selected = None
         self.turn = player_one
         self.valid_moves = {}
         self.valid_builds = {}
-        self.board = Board()
+        self.board = Board(starting_positions)
         self.is_over = False
+        self.state = None
         self.win = win
 
     def select(self, row, col):
@@ -48,7 +48,7 @@ class Game:
 
     def _move(self, row, col):
         if self.selected:
-            if self.mode == "move" and (row, col) in self.valid_moves:
+            if self.mode == "moving" and (row, col) in self.valid_moves:
                 self.board.move(self.selected, row, col)
 
                 if self.board.get_worker(row, col).height == 3:
@@ -56,7 +56,7 @@ class Game:
 
                 self.change_turn()
 
-            elif self.mode == "build" and (row, col) in self.valid_builds:
+            elif self.mode == "building" and (row, col) in self.valid_builds:
                 self.board.build(row, col)
                 self.change_turn()
 
@@ -74,19 +74,29 @@ class Game:
         else:
             self.turn = player_one
 
-    def update(self, mode):
+    def update(self, event):
         self.board.draw(self.win)
-        self.mode = mode
+        self.mode_button.update_text(self.mode)
 
-        if self.mode == "move":
+        if self.mode == "moving":
             self.draw_valid_moves(self.valid_moves, move_icon)
         else:
             self.draw_valid_moves(self.valid_builds, build_icon)
 
-        pos = pygame.mouse.get_pos()
+        self.exit_button.update()
+        self.mode_button.update()
 
-        self.exit_button.update(self.win)
-        self.exit_button.change_colour(pos)
-        self.mode_button.update(self.win)
-        self.mode_button.change_colour(pos)
+        self.exit_button.draw(self.win)
+        self.mode_button.draw(self.win)
+
+        mode = self.mode_button.handle_event(event, "mode")
+        state = self.exit_button.handle_event(event, "mode")
+
+        if mode:
+            self.mode = mode
+        elif state == "start":
+            self.state = "start"
+        else:
+            self.state = None
+
         pygame.display.update()
