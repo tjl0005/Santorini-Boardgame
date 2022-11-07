@@ -1,9 +1,9 @@
 # To Be Done
-## Priorities:
-* Winning screen
-## Polish
+## Work in Progress:
 * Clearer buildings
+* Player selected starting positions
 * Better game background
+## Polish
 * Implement OO Logic for text version
 ## Future Work
 * Implement Monte Carlo Tree Search

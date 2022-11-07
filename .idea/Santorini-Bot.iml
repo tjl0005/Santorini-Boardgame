@@ -9,6 +9,7 @@
     <option name="namespacePackageFolders">
       <list>
         <option value="$MODULE_DIR$/GUI Version" />
+        <option value="$MODULE_DIR$/Text Version" />
       </list>
     </option>
   </component>

@@ -2,8 +2,8 @@
 Used to output game messages such as the boards current state and use user inputs such as getting the start positions
 of the players
 """
-from Game.actions import out_bounds, board
-from Misc.exceptions import SpaceTakenError, SelectionError
+from ..game.actions import out_bounds, board
+from ..misc.exceptions import SpaceTakenError, SelectionError
 
 
 def get_start_pos(player, worker_loc):

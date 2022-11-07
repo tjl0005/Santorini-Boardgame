@@ -1,10 +1,10 @@
 """
 This file is used to run the bots and decide the best moves based on the evaluations
 """
-from AI.greedy import evaluate_options, get_highest
-from AI.minimax import minimax, decide_worker
-from Game.actions import worker_move, worker_build
-from Game.ui import display_board
+from ..algorithm.greedy import evaluate_options, get_highest
+from ..algorithm.minimax import minimax, decide_worker
+from ..game.actions import worker_move, worker_build
+from ..game.ui import display_board
 
 
 def medium_ai(start_pos, player):

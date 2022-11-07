@@ -2,8 +2,8 @@
 This file contains the code to perform the minimax algorithm to evaluate all the potential moves of the workers
 of the selected player
 """
-from Game.player import get_player_one, get_player_two
-from Game.actions import new_position, workerLoc, out_bounds, max_height, get_level_from_board
+from ..game.player import get_player_one, get_player_two
+from ..game.actions import new_position, workerLoc, out_bounds, max_height, get_level_from_board
 
 moves = ["W", "A", "S", "D", "WA", "WD", "SA", "SD"]
 playerOne, playerTwo = get_player_one(), get_player_two()

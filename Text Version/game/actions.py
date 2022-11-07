@@ -1,7 +1,7 @@
 """
 This file enables players to perform actions (moving, climbing and building) with their workers.
 """
-from Misc.exceptions import BoundsError, SelectionError, SpaceTakenError
+from ..misc.exceptions import BoundsError, SelectionError, SpaceTakenError
 
 board = [["|    |" for a in range(5)] for b in range(5)]  # Build the board
 workerLoc = []  # Track the worker locations

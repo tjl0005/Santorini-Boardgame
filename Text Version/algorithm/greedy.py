@@ -1,8 +1,8 @@
 """
-This file contains an implementation of a greedy AI with some enhancements to ensure a more complex competition
-Originally implemented to test and tune the minimax AI, it can be used as an easy competitor.
+This file contains an implementation of a greedy algorithm with some enhancements to ensure a more complex competition
+Originally implemented to test and tune the minimax algorithm, it can be used as an easy competitor.
 """
-from Game.actions import new_position, workerLoc, out_bounds, max_height, get_level_from_board, board
+from ..game.actions import new_position, workerLoc, out_bounds, max_height, get_level_from_board, board
 
 
 def evaluate_options(highest, start_pos, c_level, friend_index):

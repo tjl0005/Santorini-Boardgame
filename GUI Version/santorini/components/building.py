@@ -1,26 +1,33 @@
-from ..constants import SQUARE_SIZE, l1, l2, l3, l4
+"""
+Contains the class used to generate buildings
+"""
+from ..utils.functions import calc_pos
+from ..utils.assets import L1, L2, L3, L4
 
 
 class Building:
+    """
+    Class representing a building on the board
+    """
     def __init__(self, build, height):
         self.height = height
+        self.player = None
         self.row = build[0]
         self.col = build[1]
-        self.player = None
         self.x = 0
         self.y = 0
-        self.calc_pos()
-
-    def calc_pos(self):
-        self.x = SQUARE_SIZE * self.col + SQUARE_SIZE // 2 - 50
-        self.y = SQUARE_SIZE * self.row + SQUARE_SIZE // 2 - 50
+        self.x, self.y = calc_pos(self.col, self.row, 50)
 
     def draw(self, win):
+        """
+        Place relevant building asset on board
+        :param win: pygame window
+        """
         if self.height == 1:
-            win.blit(l1, (self.x, self.y))
+            win.blit(L1, (self.x, self.y))
         elif self.height == 2:
-            win.blit(l2, (self.x, self.y))
+            win.blit(L2, (self.x, self.y))
         elif self.height == 3:
-            win.blit(l3, (self.x, self.y))
+            win.blit(L3, (self.x, self.y))
         else:
-            win.blit(l4, (self.x, self.y))
+            win.blit(L4, (self.x, self.y))

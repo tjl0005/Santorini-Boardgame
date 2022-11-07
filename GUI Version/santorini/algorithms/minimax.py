@@ -1,9 +1,23 @@
+"""
+Contains an implementation of minimax and the functions to properly evaluate any given state
+"""
 import copy
 
-from ..constants import player_two, player_one
+from ..utils.constants import PLAYER_TWO, PLAYER_ONE
 
 
-def minimax(state, depth, alpha, beta, maximising, building, game):
+def play(state, depth, alpha, beta, maximising, building, game):
+    """
+    Use the minimax algorithm with alpha-beta pruning
+    :param state: current board state to evaluate
+    :param depth: depth of the tree
+    :param alpha: negInf, used for alpha-beta pruning
+    :param beta: maxInf, used for alpha-beta pruning
+    :param maximising: True, if evaluating AI player, false if evaluating an enemy player
+    :param building: True, if evaluating building options, false if evaluating movement options
+    :param game: The current game class
+    :return: the evaluation (score) and the best state
+    """
     best_state = None
 
     if depth == 0 or game.is_over:
@@ -12,8 +26,8 @@ def minimax(state, depth, alpha, beta, maximising, building, game):
     # Maximising
     if maximising:
         max_eval = float('-inf')
-        for state in get_states(state, player_two, building):
-            new_eval = minimax(state, depth - 1, alpha, beta, False, building, game)[0]
+        for state in get_states(state, PLAYER_TWO, building):
+            new_eval = play(state, depth - 1, alpha, beta, False, building, game)[0]
             if new_eval > max_eval:
                 max_eval = new_eval
                 best_state = state
@@ -28,8 +42,8 @@ def minimax(state, depth, alpha, beta, maximising, building, game):
     # Minimising
     else:
         min_eval = float('inf')
-        for state in get_states(state, player_one, building):
-            new_eval = minimax(state, depth - 1, alpha, beta, True, building, game)[0]
+        for state in get_states(state, PLAYER_ONE, building):
+            new_eval = play(state, depth - 1, alpha, beta, True, building, game)[0]
             min_eval = min(min_eval, new_eval)
             if new_eval < min_eval:
                 min_eval = new_eval
@@ -47,18 +61,39 @@ def minimax(state, depth, alpha, beta, maximising, building, game):
 
 
 def simulate_move(piece, move, board):
-    board.move(piece, move[0], move[1])
+    """
+    Given a piece and new location simulate moving the piece with a deep copied board
+    :param piece: piece to move
+    :param move: new location
+    :param board: deep copied board
+    :return: updated copy of the board
+    """
+    board.action(piece, move[0], move[1])
 
     return board
 
 
 def simulate_build(move, board):
+    """
+    Given a piece and new location simulate building with a deep copied board
+    :param move: new location
+    :param board: deep copied board
+    :return: updated copy of the board
+    """
     board.build(move[0], move[1])
 
     return board
 
 
 def get_states(board, player, building):
+    """
+    Given the current board and player simulate all possible movements for different copys of the board (states) for
+    either building (True) or moving (False)
+    :param board: the current state of the board
+    :param player: the player currently being evaluated
+    :param building: True if evaluating building, False if evaluating moving
+    :return:
+    """
     outcome = []
     for worker in board.get_player_workers(player):
         valid_moves = board.get_valid_moves(worker)[building]
@@ -77,6 +112,11 @@ def get_states(board, player, building):
 
 
 def height_evaluation(level):
+    """
+    Given a worker level return a score
+    :param level: worker level
+    :return: height score for the given worker
+    """
     match level:
         case 1:
             return 60
@@ -89,6 +129,11 @@ def height_evaluation(level):
     
 
 def evaluate(board):
+    """
+    Given the current state of the board evaluate the current state
+    :param board: current state
+    :return: final score for the given state
+    """
     # Need to implement a near win solution
     height_score, build_score, near_win = 0, 0, 0
     # Store worker heights
@@ -99,16 +144,16 @@ def evaluate(board):
     # Using enemy heights
     enemy_score = (height_evaluation(board.player_one_heights[0])) + (height_evaluation(board.player_one_heights[1]))
 
-    workers = board.get_player_workers(player_one) + board.get_player_workers(player_two)
+    workers = board.get_player_workers(PLAYER_ONE) + board.get_player_workers(PLAYER_TWO)
 
     # Evaluate all workers on the board
     for worker in workers:
         index = workers.index(worker)
         reach = board.get_valid_moves(worker)[0]
         if index in [0, 1]:
-            player = player_one
+            player = PLAYER_ONE
         else:
-            player = player_two
+            player = PLAYER_TWO
 
         for move in reach:
             if move in board.buildings and move not in board.occupied:
@@ -122,7 +167,7 @@ def evaluate(board):
                     elif building_height == heights[index] + 3:
                         score = -15
 
-                if player == player_one:
+                if player == PLAYER_ONE:
                     enemy_score += score
                 else:
                     build_score += score

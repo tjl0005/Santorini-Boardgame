@@ -1,5 +1,5 @@
 """
-Enables logs of the console to be outputted to a unique log file, these can be found under "Logs"
+Enables logs of the console to be outputted to a unique log file, these can be found under "logs"
 """
 import sys
 from datetime import datetime
@@ -15,14 +15,14 @@ class Logger(object):
         Initialise and generate the log name using the current date and time
         """
         self.terminal = sys.stdout
-        self.log = open("./Logs/{}.txt".format(datetime.now().strftime("%H%M%S")), "w+")
+        self.log = open("./logs/{}.txt".format(datetime.now().strftime("%H%M%S")), "w+")
 
     def write(self, output):
         """
         Write the output of the console to the log file
         """
         self.terminal.write(output)  # Output to console
-        self.log.write("{}\n".format(output))  # Save same output to Logs file
+        self.log.write("{}\n".format(output))  # Save same output to logs file
 
     def flush(self):
         """

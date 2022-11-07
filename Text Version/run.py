@@ -3,9 +3,9 @@ This file is run to start the game and begin the selection for the play mode.
 More details of the different play modes can be found within the README
 """
 
-from AI.play_ai import easy_ai, medium_ai
-from Game.player import set_board, playerOne, playerTwo, player_choice
-from Game.ui import move_counter, user_decide_start_pos
+from algorithm.play_ai import easy_ai, medium_ai
+from game.player import set_board, playerOne, playerTwo, player_choice
+from game.ui import move_counter, user_decide_start_pos
 
 moveCount = 0  # Keep track of the number of moves taken
 bot = False

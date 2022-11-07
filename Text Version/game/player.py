@@ -2,9 +2,9 @@
 This file is mainly used to initialise the players and to get the action selections from the user(s), but also
 contains some essential functions used to improve functionality and accessibility of the player variables
 """
-from Game.actions import workerLoc, board, worker_move, new_position, worker_build
-from Game.ui import get_start_pos, display_board, select_worker, select_action
-from Misc.exceptions import SelectionError, BoundsError, SpaceTakenError
+from ..game.actions import workerLoc, board, worker_move, new_position, worker_build
+from ..game.ui import get_start_pos, display_board, select_worker, select_action
+from ..misc.exceptions import SelectionError, BoundsError, SpaceTakenError
 
 playerOne, playerTwo = ["| A0 |", "| B0 |", "One", 0, 0], ["| C0 |", "| D0 |", "Two", 0, 0]
 
