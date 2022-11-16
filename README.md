@@ -3,12 +3,18 @@
 ### Breakdown and Future Aspirations
 
 This project implements a fully playable version of the board game Santorini in Python, with different play modes.
-Currently, a two player mode as well as a versus mode.
+Currently, a two player mode and two AI modes using Greedy (Easier) and Minimax (Harder) approaches.
 
 The versus mode is hoped to be expanded upon using Monte Carlo Search and potentially further refining of the current
 MiniMax implementation.
 
-### Playing the Game
+### Graphic Version
+
+This version has a full GUI used to play the game and is intended to be self-explanatory. The default mode means the 
+game will start with two players and pre-set starting positions. To change these settings you must use the options menu
+to change the play mode to either Minimax or Greedy, or it can be updated so the user selects their starting positions.
+
+### Text Version
 
 When running the code you will be firstly asked for the starting points of the workers.
 These inputs are validated and must be in the form of "2,1". Where the first number represents the row and the second
@@ -20,10 +26,9 @@ Once this selection is made you will be prompted to select a worker and decide i
 You select the tile you want using the WASD keys, and you can move diagonally by combining directions e.g. Left/Up is WA
 .
 
-The game will end when a player has a worker on level 3. More details on playing the game are below.
-
 ### Santorini Walk-through
 
+The game will end when a player has a worker on level 3. More details on playing the game are below.
 A great guide is available at: https://en.boardgamearena.com/doc/Tips_santorini and a basic rundown of the game is below
 
 #### Basics

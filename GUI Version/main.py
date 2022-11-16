@@ -3,10 +3,10 @@ Main file of the graphical version of Santorini
 """
 import pygame
 
-from santorini.game import Game
+from santorini.screens.game import Game
 from santorini.utils.assets import GAME_ICON
 from santorini.algorithms import greedy, minimax
-from santorini.menus import Start, Options, Winner, Select
+from santorini.screens.menus import Start, Options, Winner
 from santorini.utils.functions import get_row_col_from_mouse
 from santorini.utils.constants import HEIGHT, WIDTH, FPS, PLAYER_TWO
 
@@ -19,14 +19,14 @@ class Santorini:
         self.window = pygame.display.set_mode((WIDTH, HEIGHT))
         self.clock = pygame.time.Clock()
         self.run = True
-        self.starting_positions = None  # Initialised in start function
         self.state = "start"  # First screen to be displayed
+        self.user_select = False
+
         # Different screens to be used
-        self.game = Game(self.window, self.starting_positions)
+        self.game = Game(self.window, self.user_select)
         self.start = Start(self.window)
         self.options = Options(self.window)
-        self.win_screen = Winner(self.window)
-        self.select_pos = Select(self.window)
+        self.winner = Winner(self.window)
 
     def start(self):
         """
@@ -42,25 +42,21 @@ class Santorini:
                     self.run = False
 
                 elif self.state == "start":
-                    self.game = Game(self.window, self.starting_positions)
+                    self.game = Game(self.window, self.user_select)
                     new_state = self.start.update(event)
+
                     # Detect if user switching to options menu or starting game
                     if new_state:
                         self.state = new_state
 
-                elif self.state == "select":
-                    # Not implemented
-                    # self.starting_positions = [[2, 3], [3, 2], [1, 2], [2, 1]]
-                    self.select_pos.update(event)
-                    self.state = self.select_pos.state
-
                 elif self.state == "options":
                     self.options.update(event)
                     self.state = self.options.state
+                    self.user_select = self.options.start_select
 
                 elif self.game.is_over or self.state == "win_screen":
-                    self.win_screen.update(event, self.game.turn)
-                    self.state = self.win_screen.state
+                    self.winner.update(event, self.game.turn)
+                    self.state = self.winner.state
 
                 elif self.state == "play":
                     # Algorithm always uses player two

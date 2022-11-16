@@ -1,26 +1,28 @@
 """
 Contains the board class to be used for creating the board, displaying the board and handling moving and building
 """
-import pygame
 
 from ..components.worker import Worker
 from ..components.building import Building
-from ..utils.constants import SQUARE_SIZE, ROWS, COLS, PLAYER_ONE, PLAYER_TWO, DARK_GREEN, LIGHT_GREEN, GREEN
+from ..utils.constants import ROWS, COLS, PLAYER_ONE, PLAYER_TWO, DEFAULT_POSITIONS, ALL_POSITIONS
+from ..utils.functions import draw_grass_background
 
 
 class Board:
     """
     Class used to generate the board and track occupied spaces and worker heights
     """
-    def __init__(self, starting_positions):
-        # Will update with user selected starting positions
-        self.occupied = [(1, 2), (2, 1), (2, 3), (3, 2)]  # Represents worker locations
-        # Track heights of each player's workers
-        self.player_one_heights = [0, 0]
-        self.player_two_heights = [0, 0]
-        self.starting_positions = starting_positions
-        self.buildings = []
+    def __init__(self, start_type):
+        # Check type of starting positions
+        if start_type == "User Positions":
+            self.user_select = True
+        else:
+            self.user_select = False
+
         self.board = []
+        self.buildings = []
+        self.occupied = DEFAULT_POSITIONS  # Updated whenever a worker moves
+        self.player_one_heights, self.player_two_heights = [0, 0], [0, 0]
         self.create_board()
 
     def create_board(self):
@@ -34,10 +36,11 @@ class Board:
                 self.board[row].append(0)
 
         # Initialise worker positions
-        worker_one = self.starting_positions[0]
-        worker_two = self.starting_positions[1]
-        worker_three = self.starting_positions[2]
-        worker_four = self.starting_positions[3]
+        worker_one = self.occupied[0]
+        worker_two = self.occupied[1]
+        worker_three = self.occupied[2]
+        worker_four = self.occupied[3]
+
         # Place workers on board
         self.board[worker_one[0]][worker_one[1]] = (Worker(worker_one, PLAYER_ONE, 0))
         self.board[worker_two[0]][worker_two[1]] = (Worker(worker_two, PLAYER_ONE, 1))
@@ -49,15 +52,9 @@ class Board:
         Display the board in its current state, including all pieces present
         :param win:
         """
-        win.fill(LIGHT_GREEN)
-        for row in range(ROWS):
-            # Draw tiles
-            for col in range(row % 2, COLS, 2):
-                pygame.draw.rect(win, DARK_GREEN, (row * SQUARE_SIZE, col * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
-
+        draw_grass_background(win)
         for row in range(ROWS):
             for col in range(COLS):
-                pygame.draw.rect(win, GREEN, (row * SQUARE_SIZE, col * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE), 1)
                 item = self.board[row][col]  # Refers to either a worker or a building
                 if item != 0:
                     item.draw(win)
@@ -68,12 +65,17 @@ class Board:
         :param worker: the worker whose reach is being obtained
         :return:
         """
+        # All adjacent squares
         moves = [(worker.row - 1, worker.col), (worker.row, worker.col - 1), (worker.row + 1, worker.col),
                  (worker.row, worker.col + 1), (worker.row - 1, worker.col - 1), (worker.row - 1, worker.col + 1),
                  (worker.row + 1, worker.col - 1), (worker.row + 1, worker.col + 1)]
 
         # Remove any moves where a worker is
         moves[:] = [move for move in moves if move not in self.occupied]
+
+        # If selecting start positions, the valid moves are any unoccupied space
+        if self.user_select:
+            moves[:] = [move for move in ALL_POSITIONS if move not in self.occupied]
 
         return moves
 
@@ -105,8 +107,7 @@ class Board:
         :param row: desired row
         :param col: desired column
         """
-        updated_index = self.occupied.index((worker.row, worker.col))
-        self.occupied[updated_index] = (row, col)
+        self.occupied[worker.index] = (row, col)
 
         if (row, col) in self.buildings:  # New location has a building on it
             # Get respective heights before they are modified
@@ -144,13 +145,11 @@ class Board:
         :param row:
         :param col:
         """
-        # Building on an existing building
-        if (row, col) in self.buildings:
+        if (row, col) in self.buildings:  # Building on an existing building
             height = self.board[row][col].height
             # Increase height
             self.board[row][col] = (Building([row, col], height + 1))
-        # Producing new building on board
-        else:
+        else:  # Producing new building on board
             self.buildings.append((row, col))
             self.board[row][col] = (Building([row, col], 1))
 

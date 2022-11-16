@@ -18,22 +18,21 @@ def play(game, player):
 
     board = game.board
 
+    # Get all worker details and store as current players and enemies
     workers = board.get_player_workers(PLAYER_TWO)
     worker_reaches = [board.get_valid_moves(workers[0])[1], board.get_valid_moves(workers[1])[1]]
-
     enemies = board.get_player_workers(enemy)
     enemy_reaches = [board.get_valid_moves(enemies[0])[1] + board.get_valid_moves(enemies[1])[1]]
 
     move = best_move(board, workers, enemy_reaches)
-    print([workers[0].height, workers[1].height])
 
     if not move:  # Algorithm could not find a good enough move
         return False, best_build(board, workers, worker_reaches, enemy_reaches)
     # Pick better move, the one leading to a higher worker
     elif workers[0].height > workers[1].height:
-        board.action(workers[1], move[0], move[1])
+        board.move(workers[1], move[0], move[1])
     else:
-        board.action(workers[0], move[0], move[1])
+        board.move(workers[0], move[0], move[1])
     # Detect win
     if 3 in [workers[0].height, workers[1].height]:
         game.is_over = True

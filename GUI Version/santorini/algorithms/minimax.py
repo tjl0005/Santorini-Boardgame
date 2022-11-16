@@ -68,7 +68,7 @@ def simulate_move(piece, move, board):
     :param board: deep copied board
     :return: updated copy of the board
     """
-    board.action(piece, move[0], move[1])
+    board.move(piece, move[0], move[1])
 
     return board
 
@@ -87,7 +87,7 @@ def simulate_build(move, board):
 
 def get_states(board, player, building):
     """
-    Given the current board and player simulate all possible movements for different copys of the board (states) for
+    Given the current board and player simulate all possible movements for different copies of the board (states) for
     either building (True) or moving (False)
     :param board: the current state of the board
     :param player: the player currently being evaluated

@@ -6,10 +6,10 @@ When pages are initialised they must be updated for each pygame tick for proper 
 """
 import pygame
 
-from .components.button import Button
-from .utils.functions import page_template
-from .utils.assets import SUPPORTER, MESSAGE_FONT
-from .utils.constants import BUTTON_SIZE_ONE, BUTTON_SIZE_TWO, WHITE
+from ..components.button import Button
+from ..utils.functions import page_template
+from ..utils.assets import SUPPORTER, MESSAGE_FONT
+from ..utils.constants import BUTTON_SIZE_ONE, BUTTON_SIZE_TWO, WHITE
 
 
 class Start:
@@ -153,44 +153,4 @@ class Winner:
         else:
             self.state = "win_screen"
 
-        pygame.display.update()
-
-
-class Select:
-    """
-    Not yet implemented, but would be used to allow a player to select their own starting positions
-    """
-    def __init__(self, win):
-        self.win = win
-        self.state = "start"
-        self.player = "player one"
-        self.player_button = Button(200, 250, self.player, BUTTON_SIZE_TWO)
-        self.return_button = Button(400, 250, "confirm positions", BUTTON_SIZE_TWO)
-
-    def update(self, event):
-        """
-
-        :param event: pygame event, used to decide button action
-        """
-        page_template(self.win, "Positions")
-
-        self.return_button.draw(self.win)
-        self.return_button.update()
-
-        self.player_button.draw(self.win)
-        self.player_button.update()
-
-        if self.return_button.handle_event(event, "options"):
-            self.state = "options"
-            self.return_button.hovered = False
-        else:
-            self.state = "select"
-
-        if self.player_button.handle_event(event, "options"):
-            if self.player == "player one":
-                self.player = "player two"
-            else:
-                self.player = "player one"
-
-        self.player_button.update_text(self.player)
         pygame.display.update()

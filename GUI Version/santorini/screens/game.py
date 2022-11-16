@@ -1,13 +1,14 @@
 """
-To write
+Contains the game class which is used to manage the mechanics of the game, this is the most import class and must be
+updated for each pygame tick
 """
 import pygame
 
-from .components.board import Board
-from .components.button import Button
-from .utils.functions import calc_pos
-from .utils.assets import MOVE_ICON, BUILD_ICON
-from .utils.constants import BUTTON_SIZE_ONE, PLAYER_ONE, PLAYER_TWO, DEFAULT_POSITIONS
+from ..components.board import Board
+from ..components.button import Button
+from ..utils.functions import calc_pos
+from ..utils.assets import MOVE_ICON, BUILD_ICON
+from ..utils.constants import BUTTON_SIZE_ONE, PLAYER_ONE, PLAYER_TWO, DEFAULT_POSITIONS
 
 
 class Game:
@@ -20,6 +21,7 @@ class Game:
 
         self.mode = "moving"  # Player either moving or building
         self.mode_button = Button(550, 20, self.mode, BUTTON_SIZE_ONE)  # Switch between moving and building
+        self.confirm_button = Button(300, 20, "confirm", BUTTON_SIZE_ONE)  # Confirm start positions
         self.exit_button = Button(50, 20, "exit", BUTTON_SIZE_ONE)  # Return to start menu
         self.selected = None  # Selected worker
         self.turn = PLAYER_ONE  # Current players move
@@ -37,11 +39,16 @@ class Game:
         :param col: board column
         :return: True if valid selection, otherwise False
         """
+        result = None
+
         if self.selected:
-            result = self.action(row, col)
+            if not self.board.user_select:
+                result = self.action(row, col)
+            else:
+                self.change_start_pos(row, col)
+
             if not result:
                 self.selected = None
-                self.select(row, col)
 
         worker = self.board.get_worker(row, col)
         # Ensure valid selection made
@@ -84,10 +91,23 @@ class Game:
                 self.board.build(row, col)
                 self.change_turn()
 
+            return True
+
         else:
             return False
 
-        return True
+    def change_start_pos(self, row, col):
+        """
+        Update the starting position of a worker
+        :param row: selected row
+        :param col: selected column
+        :return: True if selection is valid
+        """
+        # Check selected position is not occupied and user is not hovering over the confirm button
+        if self.selected and (row, col) not in self.board.occupied and not self.confirm_button.hovered:
+            self.board.move(self.selected, row, col)
+
+            return True
 
     def change_turn(self):
         """
@@ -96,6 +116,7 @@ class Game:
         # Reset valid options
         self.valid_moves = {}
         self.valid_builds = {}
+
         # Switch turn
         if self.turn == PLAYER_ONE:
             self.turn = PLAYER_TWO
@@ -109,6 +130,7 @@ class Game:
         """
         self.board.draw(self.win)  # Display board
         self.mode_button.update_text(self.mode)  # Change button text so correct mode shown to user
+
         # Show relevant moves
         if self.mode == "moving":
             self.draw_valid_moves(self.valid_moves, MOVE_ICON)
@@ -130,5 +152,16 @@ class Game:
             self.state = "start"
         else:  # No change required
             self.state = None
+
+        if self.board.user_select:
+            self.confirm_button.update()
+            self.confirm_button.draw(self.win)
+            change_turn = self.confirm_button.handle_event(event, "confirm")
+
+            if change_turn:
+                if self.turn == PLAYER_TWO:
+                    self.board.user_select = False
+                    self.mode = "moving"
+                self.change_turn()
 
         pygame.display.update()

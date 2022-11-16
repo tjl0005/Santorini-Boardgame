@@ -3,7 +3,7 @@ Contains utility functions used throughout the project
 """
 
 from .constants import SQUARE_SIZE, BLUE, ROWS, COLS
-from .assets import MENU_BACKGROUND, CLOUD, TITLE_FONT, GRASS
+from .assets import MENU_BACKGROUND, GAME_BACKGROUND, CLOUD, TITLE_FONT, GRASS
 
 
 def calc_pos(col, row, offset):
@@ -48,7 +48,7 @@ def page_template(win, title_text):
     win.blit(text, text_rect)
 
 
-def draw_grass(win):
+def draw_grass_tiles(win):
     """
     Draw tiles instead of squares for game board
     :param win: pygame window
@@ -57,3 +57,11 @@ def draw_grass(win):
         for col in range(COLS):
             x, y = calc_pos(col, row, 60)
             win.blit(GRASS, (x, y))
+
+
+def draw_grass_background(win):
+    """
+    Draw the background for the game as a singular image, instead of tiles
+    :param win:
+    """
+    win.blit(GAME_BACKGROUND, (0, 0))

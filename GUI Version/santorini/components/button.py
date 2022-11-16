@@ -1,5 +1,5 @@
 """
-File containing the button class
+Contains the button class used to create button objects with functionality
 """
 import pygame
 
@@ -91,3 +91,5 @@ class Button:
                         return "Default Positions"
                     else:
                         return False
+                elif button_type == "confirm":
+                    return True

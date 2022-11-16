@@ -22,9 +22,7 @@ class Worker:
         self.height = 0
         self.row = pos[0]
         self.col = pos[1]
-        self.x = 0
-        self.y = 0
-        self.x, self.y = calc_pos(self.col, self.row, 50)
+        self.x, self.y = calc_pos(self.col, self.row, 25)
 
     def move(self, row, col):
         """
@@ -34,7 +32,7 @@ class Worker:
         """
         self.row = row
         self.col = col
-        self.x, self.y = calc_pos(self.col, self.row, 50)
+        self.x, self.y = calc_pos(self.col, self.row, 25)
 
     def draw(self, win):
         """
