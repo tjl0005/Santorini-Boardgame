@@ -4,9 +4,9 @@ Main file of the graphical version of Santorini
 import pygame
 
 from santorini.screens.game import Game
-from santorini.utils.assets import GAME_ICON
+from santorini.utils.assets import BUILD_ICON
 from santorini.algorithms import greedy, minimax
-from santorini.screens.menus import Start, Options, Winner
+from santorini.screens.menus import Start, Options, Winner, Gods
 from santorini.utils.functions import get_row_col_from_mouse
 from santorini.utils.constants import HEIGHT, WIDTH, FPS, PLAYER_TWO
 
@@ -26,13 +26,14 @@ class Santorini:
         self.game = Game(self.window, self.user_select)
         self.start = Start(self.window)
         self.options = Options(self.window)
+        self.gods = Gods(self.window)
         self.winner = Winner(self.window)
 
     def start(self):
         """
         Call to run game
         """
-        pygame.display.set_icon(GAME_ICON)
+        pygame.display.set_icon(BUILD_ICON)
         pygame.display.set_caption('Santorini')
 
         while self.run:
@@ -44,7 +45,6 @@ class Santorini:
                 elif self.state == "start":
                     self.game = Game(self.window, self.user_select)
                     new_state = self.start.update(event)
-
                     # Detect if user switching to options menu or starting game
                     if new_state:
                         self.state = new_state
@@ -54,11 +54,25 @@ class Santorini:
                     self.state = self.options.state
                     self.user_select = self.options.start_select
 
+                elif self.state == "gods":
+                    self.gods.update(event)
+                    self.state = self.gods.state
+
                 elif self.game.is_over or self.state == "win_screen":
                     self.winner.update(event, self.game.turn)
                     self.state = self.winner.state
 
                 elif self.state == "play":
+                    if self.gods.mode == "Simple Gods":
+                        self.game.using_gods = True
+                        self.game.gods = [self.gods.player_one_god, self.gods.player_two_god]
+                    elif self.gods.mode == "None":
+                        self.game.using_gods = False
+                        self.game.gods = []
+                    else:
+                        self.game.using_gods = True
+                        self.game.gods = []
+
                     # Algorithm always uses player two
                     if self.game.turn == PLAYER_TWO and self.options.game_type != "Two Player":
                         if self.options.game_type == "Minimax":

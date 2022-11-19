@@ -96,7 +96,7 @@ def get_states(board, player, building):
     """
     outcome = []
     for worker in board.get_player_workers(player):
-        valid_moves = board.get_valid_moves(worker)[building]
+        valid_moves = board.valid_moves(worker)[building]
         for move in valid_moves:
             # X and Y coordinate are not out of bounds (Less than zero or grater than 5)
             if move[0] < 5 > move[1] > 0 < move[0]:
@@ -149,7 +149,7 @@ def evaluate(board):
     # Evaluate all workers on the board
     for worker in workers:
         index = workers.index(worker)
-        reach = board.get_valid_moves(worker)[0]
+        reach = board.valid_moves(worker)[0]
         if index in [0, 1]:
             player = PLAYER_ONE
         else:

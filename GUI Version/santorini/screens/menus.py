@@ -7,9 +7,9 @@ When pages are initialised they must be updated for each pygame tick for proper 
 import pygame
 
 from ..components.button import Button
-from ..utils.functions import page_template
+from ..utils.functions import page_template, add_god_description, add_mode_description
 from ..utils.assets import SUPPORTER, MESSAGE_FONT
-from ..utils.constants import BUTTON_SIZE_ONE, BUTTON_SIZE_TWO, WHITE
+from ..utils.constants import BUTTON_SIZE_ONE, BUTTON_SIZE_TWO, WHITE, PLAYER_ONE, PLAYER_TWO
 
 
 class Start:
@@ -20,7 +20,8 @@ class Start:
         self.win = win
         self.start_button = Button(300, 200, "Start", BUTTON_SIZE_ONE)  # Begin new game
         self.options_button = Button(300, 250, "Options", BUTTON_SIZE_ONE)  # View options menu
-        self.exit_button = Button(300, 300, "Exit", BUTTON_SIZE_ONE)  # Close application
+        self.gods_button = Button(300, 300, "Gods", BUTTON_SIZE_ONE)  # Change god mode
+        self.exit_button = Button(300, 350, "Exit", BUTTON_SIZE_ONE)  # Close application
 
     def update(self, event):
         """
@@ -31,25 +32,30 @@ class Start:
         page_template(self.win, "Santorini")  # Set background and display title
 
         # Ensure buttons are highlighted
-        self.start_button.update()
-        self.options_button.update()
-        self.exit_button.update()
+        self.start_button.update_colour()
+        self.options_button.update_colour()
+        self.gods_button.update_colour()
+        self.exit_button.update_colour()
+
         # Display buttons
         self.start_button.draw(self.win)
         self.options_button.draw(self.win)
+        self.gods_button.draw(self.win)
         self.exit_button.draw(self.win)
+
         # Handle button clicks
         start_clicked = self.start_button.handle_event(event, "display")
         options_clicked = self.options_button.handle_event(event, "display")
+        gods_clicked = self.gods_button.handle_event(event, "display")
         self.exit_button.handle_event(event, "display")
 
-        # If clicked handle_event returns true
+        # If clicked handle_event returns true, then switch screen
         if start_clicked:
-            self.start_button.hovered = False
             return "play"
         elif options_clicked:
-            self.options_button.hovered = False
             return "options"
+        elif gods_clicked:
+            return "gods"
 
         pygame.display.update()
 
@@ -75,18 +81,20 @@ class Options:
         :return:
         """
         page_template(self.win, "options")
+
+        # Show buttons
         self.return_button.draw(self.win)
         self.option_button.draw(self.win)
         self.select_button.draw(self.win)
 
-        self.return_button.update()
-        self.option_button.update()
-        self.select_button.update()
+        # Update buttons for hovering
+        self.return_button.update_colour()
+        self.option_button.update_colour()
+        self.select_button.update_colour()
 
         # Update state to go back to start menu
         if self.return_button.handle_event(event, "options"):
             self.state = "start"
-            self.return_button.hovered = False
         # Not changing screens
         else:
             self.state = "options"
@@ -94,21 +102,89 @@ class Options:
         game_type = self.option_button.handle_event(event, "options")
         selection_type = self.select_button.handle_event(event, "options")
 
-        # Go through list of play modes
-        if game_type == "Two Player":
-            self.game_type = "Two Player"
-        elif game_type == "Minimax":
-            self.game_type = "Minimax"
-        elif game_type == "Greedy":
-            self.game_type = "Greedy"
-        # Go through list of starting position options
-        if selection_type == "Default Positions":
-            self.start_select = "Default Positions"
-        elif selection_type == "User Positions":
-            self.start_select = "User Positions"
+        # If button handler returns value then it has been pressed by user
+        if game_type is not None:
+            self.game_type = game_type
+            self.option_button.update_text(self.game_type)
+        if selection_type is not None:
+            self.start_select = selection_type
+            self.select_button.update_text(self.start_select)
 
-        self.option_button.update_text(self.game_type)
-        self.select_button.update_text(self.start_select)
+        pygame.display.update()
+
+
+class Gods:
+    """
+    Display options menu including the main menu button, player mode button (Two Player, Minimax or Greedy) and starting
+     worker positions
+    """
+    def __init__(self, win):
+        self.win = win
+        self.state = "gods"
+        self.cancel_button = Button(100, 200, "cancel", BUTTON_SIZE_TWO)  # Cancel, do not proceed with god functions
+        self.mode_button = Button(300, 200, "None", BUTTON_SIZE_TWO)
+        self.confirm_button = Button(500, 200, "confirm", BUTTON_SIZE_TWO)  # Confirm god selection
+        self.player_one_god_button = Button(150, 300, "Select God", BUTTON_SIZE_TWO)
+        self.player_two_god_button = Button(450, 300, "Select God", BUTTON_SIZE_TWO)
+        self.player_one_god = None
+        self.player_two_god = None
+        self.mode = "None"
+
+    def update(self, event):
+        """
+        Used to generate the initial menu and enable the buttons to be functional.
+        :param event: pygame event, used to decide button action
+        :return:
+        """
+        page_template(self.win, "gods")
+        # Display buttons
+        self.cancel_button.draw(self.win)
+        self.mode_button.draw(self.win)
+        self.confirm_button.draw(self.win)
+        # Check if hovering
+        self.cancel_button.update_colour()
+        self.mode_button.update_colour()
+        self.confirm_button.update_colour()
+
+        # Only show god options if in god mode
+        if self.mode == "Simple Gods":
+            # Add descriptions of currently viewed gods
+            add_god_description(self.win, PLAYER_ONE, self.player_one_god)
+            add_god_description(self.win, PLAYER_TWO, self.player_two_god)
+
+            # Update buttons
+            self.player_one_god_button.draw(self.win)
+            self.player_two_god_button.draw(self.win)
+            self.player_one_god_button.update_colour()
+            self.player_two_god_button.update_colour()
+            player_one_god = self.player_one_god_button.handle_event(event, "gods")
+            player_two_god = self.player_two_god_button.handle_event(event, "gods")
+
+            if player_one_god is not None:
+                self.player_one_god = player_one_god
+                self.player_one_god_button.update_text(player_one_god)
+            if player_two_god is not None:
+                self.player_two_god = player_two_god
+                self.player_two_god_button.update_text(player_two_god)
+
+        # No gods and custom mode have same template, so only need a description to be shown
+        else:
+            add_mode_description(self.win, self.mode)
+
+        if self.cancel_button.handle_event(event, "cancel"):
+            # Cancelling so reset god values
+            self.player_one_god = None
+            self.player_two_god = None
+            self.state = "start"
+        elif self.confirm_button.handle_event(event, "confirm"):
+            self.state = "start"
+        else:
+            self.state = "gods"
+
+        mode = self.mode_button.handle_event(event, "god_mode")
+        if mode is not None:
+            self.mode = mode
+            self.mode_button.update_text(mode)
 
         pygame.display.update()
 
@@ -145,11 +221,10 @@ class Winner:
         self.win_message()
 
         self.return_button.draw(self.win)
-        self.return_button.update()
+        self.return_button.update_colour()
 
         if self.return_button.handle_event(event, "options"):
             self.state = "start"
-            self.return_button.hovered = False
         else:
             self.state = "win_screen"
 

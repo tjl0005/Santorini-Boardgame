@@ -1,9 +1,12 @@
 # To Be Done
 ## Work in Progress:
-* God functionality -> Limit to four gods (For now)?
-* Bug testing/fixing
+* God move restrictions
 ## Polish
-* Add hover to workers?
+* God icons
+* Options icons
+* * Better menu background
+### Known Bugs
+* God restrictions not fully tested
 ## Future Work
 * Implement Monte Carlo Tree Search
-* More than two workers?
+* Three/Four Workers

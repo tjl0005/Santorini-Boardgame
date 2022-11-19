@@ -42,7 +42,7 @@ A great guide is available at: https://en.boardgamearena.com/doc/Tips_santorini 
 * Turn Based, a player can either move worker or build once (unless otherwise specified)
 * First worker up to three levels wins
 
-#### Characters
+#### Gods
 
 Provide unique buffs/skills:
 

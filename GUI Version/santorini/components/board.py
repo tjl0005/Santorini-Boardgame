@@ -4,8 +4,8 @@ Contains the board class to be used for creating the board, displaying the board
 
 from ..components.worker import Worker
 from ..components.building import Building
-from ..utils.constants import ROWS, COLS, PLAYER_ONE, PLAYER_TWO, DEFAULT_POSITIONS, ALL_POSITIONS
-from ..utils.functions import draw_grass_background
+from ..utils.constants import ROWS, COLS, PLAYER_ONE, PLAYER_TWO, ALL_POSITIONS, DEFAULT_POSITIONS
+from ..utils.functions import draw_grass_background, god_conditions
 
 
 class Board:
@@ -19,10 +19,9 @@ class Board:
         else:
             self.user_select = False
 
-        self.board = []
-        self.buildings = []
         self.occupied = DEFAULT_POSITIONS  # Updated whenever a worker moves
         self.player_one_heights, self.player_two_heights = [0, 0], [0, 0]
+        self.board, self.buildings = [], []
         self.create_board()
 
     def create_board(self):
@@ -66,12 +65,13 @@ class Board:
         :return:
         """
         # All adjacent squares
-        moves = [(worker.row - 1, worker.col), (worker.row, worker.col - 1), (worker.row + 1, worker.col),
-                 (worker.row, worker.col + 1), (worker.row - 1, worker.col - 1), (worker.row - 1, worker.col + 1),
-                 (worker.row + 1, worker.col - 1), (worker.row + 1, worker.col + 1)]
+        moves = [[worker.row - 1, worker.col], [worker.row, worker.col - 1], [worker.row + 1, worker.col],
+                 [worker.row, worker.col + 1], [worker.row - 1, worker.col - 1], [worker.row - 1, worker.col + 1],
+                 [worker.row + 1, worker.col - 1], [worker.row + 1, worker.col + 1]]
 
         # Remove any moves where a worker is
         moves[:] = [move for move in moves if move not in self.occupied]
+        print(self.occupied)
 
         # If selecting start positions, the valid moves are any unoccupied space
         if self.user_select:
@@ -79,15 +79,15 @@ class Board:
 
         return moves
 
-    def get_valid_moves(self, worker):
+    def valid_moves(self, worker):
         """
         Get all moves for a worker that can be made, meaning each new position does not have a building that is too high
         for a worker or a dome. As well as removing domes from valid builds.
         :param worker: the worker whose reaches are being obtained
         :return: valid moves and builds that are possible for a worker
         """
-        valid_moves = self.possible_moves(worker)  # Worker can move to these position
-        valid_builds = self.possible_moves(worker)  # Worker can build on these positions
+        valid_moves = self.possible_moves(worker)
+        valid_builds = self.possible_moves(worker)
 
         for move in valid_moves:
             if move in self.buildings:
@@ -100,6 +100,37 @@ class Board:
 
         return valid_moves, valid_builds
 
+    def god_moves(self, worker, god, last_move):
+        """
+        Used for getting moves when gods are in use
+        :param worker: the worker whose reaches are being obtained
+        :param god: current god being used by the player
+        :param last_move: last move from the game
+        :return: valid moves and builds
+        """
+        print("Current God: {}".format(god))
+        print("Last Move: {}".format(last_move))
+        condition = god_conditions(last_move, god)
+        valid_moves = self.possible_moves(worker)
+        valid_builds = self.possible_moves(worker)
+
+        for move in valid_moves:
+            if move in self.buildings:
+                building_height = self.board[move[0]][move[1]].height
+                # Level is only 1 higher than worker and building is not a dome
+                if worker.height + 1 < building_height or building_height > 3:
+                    valid_moves.remove(move)
+                if building_height > 3 or (condition == "upto l2" and building_height > 2) or (
+                        condition == "new" and move not in last_move):
+                    valid_builds.remove(move)
+
+        if condition == "move":
+            valid_builds = []
+        elif condition == "build":
+            valid_moves = []
+
+        return valid_moves, valid_builds
+
     def move(self, worker, row, col):
         """
         Given a worker update their position on the board to the given row and column
@@ -107,16 +138,18 @@ class Board:
         :param row: desired row
         :param col: desired column
         """
-        self.occupied[worker.index] = (row, col)
+        # Using old coordinates to get correct index to update
+        updated_index = self.occupied.index([worker.row, worker.col])
+        self.occupied[updated_index] = [row, col]
 
-        if (row, col) in self.buildings:  # New location has a building on it
+        if [row, col] in self.buildings:  # New location has a building on it
             # Get respective heights before they are modified
             building_height = self.board[row][col].height
             worker_height = worker.height
 
             # Check if old pos has a building that needs to be replaced
-            if (worker.row, worker.col) in self.buildings:
-                self.board[row][col] = (Building([worker.row, worker.col], worker_height))
+            if [worker.row, worker.col] in self.buildings:
+                self.board[row][col] = Building([worker.row, worker.col], worker_height)
 
             # Update worker details and remove building from record as it is now occupied
             worker.height = building_height
@@ -145,12 +178,12 @@ class Board:
         :param row:
         :param col:
         """
-        if (row, col) in self.buildings:  # Building on an existing building
+        if [row, col] in self.buildings:  # Building on an existing building
             height = self.board[row][col].height
             # Increase height
             self.board[row][col] = (Building([row, col], height + 1))
         else:  # Producing new building on board
-            self.buildings.append((row, col))
+            self.buildings.append([row, col])
             self.board[row][col] = (Building([row, col], 1))
 
     def get_worker(self, row, col):

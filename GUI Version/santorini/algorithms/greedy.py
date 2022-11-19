@@ -20,9 +20,9 @@ def play(game, player):
 
     # Get all worker details and store as current players and enemies
     workers = board.get_player_workers(PLAYER_TWO)
-    worker_reaches = [board.get_valid_moves(workers[0])[1], board.get_valid_moves(workers[1])[1]]
+    worker_reaches = [board.valid_moves(workers[0])[1], board.valid_moves(workers[1])[1]]
     enemies = board.get_player_workers(enemy)
-    enemy_reaches = [board.get_valid_moves(enemies[0])[1] + board.get_valid_moves(enemies[1])[1]]
+    enemy_reaches = [board.valid_moves(enemies[0])[1] + board.valid_moves(enemies[1])[1]]
 
     move = best_move(board, workers, enemy_reaches)
 
@@ -48,7 +48,7 @@ def best_move(board, workers, enemy_reaches):
     :param enemy_reaches: reaches of enemy workers
     :return: the best move found
     """
-    one_reach, two_reach = board.get_valid_moves(workers[0])[0], board.get_valid_moves(workers[1])[0]
+    one_reach, two_reach = board.valid_moves(workers[0])[0], board.valid_moves(workers[1])[0]
     worker_one_level, worker_one_highest = highest_buildings(board, one_reach)
     worker_two_level, worker_two_highest = highest_buildings(board, two_reach)
 
